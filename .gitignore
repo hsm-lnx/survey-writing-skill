@@ -1,0 +1,30 @@
+# ---- 密钥：绝不入库 ----
+.env
+*.env
+!.env.example
+*.key
+*.token
+*.pem
+secrets.*
+
+# ---- 接口原始返回与本地运行产物 ----
+reports/_raw/
+reports/
+manuscript/
+bib/
+docs/
+*.log.md
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

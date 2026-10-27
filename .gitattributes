@@ -1,0 +1,10 @@
+# 行尾锁定：避免 Windows 用户 clone 后 shell 脚本被转成 CRLF 而无法执行
+* text=auto eol=lf
+*.sh    text eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
+*.ps1   text eol=crlf
+*.cmd   text eol=crlf
+
+# install.ps1 依赖 UTF-8 BOM（PowerShell 5.1 按 ANSI 读无 BOM 的中文脚本会解析失败）
+# 不要用会去 BOM 的编辑器另存；如需重写，存完补 EF BB BF。
