@@ -1,8 +1,7 @@
-# survey-writing skill — 通用快照版
+# survey-writing skill 
 
 一套中文综述写作规范的 Claude Code skill，含文献存在性核验、引用覆盖核对、Zotero 直写通道。
 
-这是 **v3.0-clean 快照**：条文完整，病例已匿名化，不含任何原始项目的正文、文献编号、文件路径或行号。
 
 ## 三步部署
 
