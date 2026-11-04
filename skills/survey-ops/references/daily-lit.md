@@ -74,7 +74,7 @@ python <skill>/scripts/daily/init_daily.py --workdir ./daily
 | `from_filter` | Alert 发件人完整地址 | 例如 `alerts-noreply@clarivate.com` |
 | `match_domain` | 发件人域名 | 用于兜住数据库换发信地址；QQ IMAP 不支持按域名服务端检索，脚本在客户端过滤 |
 | `folders` | 扫描的文件夹 | 默认 `["INBOX", "Junk"]`，垃圾箱也扫 |
-| `ledger_path` | 台账路径 | 留空用 `../bib/verified.md`；相对路径以监控目录为基准 |
+| `ledger_path` | 台账路径 | 留空用项目根目录下的 `bib/verified.md`；相对路径以项目根目录为基准 |
 | `manuscript_globs` | 正文 glob 列表 | 留空用 `["manuscript/*.md", "docs/*.md"]`；只收 `.md` / `.txt` |
 
 填完先跑只读体检（不会显示授权码）：
