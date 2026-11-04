@@ -319,12 +319,34 @@ doctor 会显示检测到的代理变量，方便排查。
 
 它不是台账：简报只回答「这篇值不值得看、以什么角色看、下一步做什么」。要把候选写进正文，仍走「写作卷定强度 → 体系卷取全文入账 → 写作卷落笔」的固定顺序。
 
-**前提**：
+**第 0 步：在数据库里建好 Alert，并确认邮箱能收**
 
-- 已在 Web of Science / Scopus / PubMed / 期刊网站建好保存检索或 Alert，邮件能收到；
-- 邮箱支持 IMAP（QQ、Gmail、Outlook 均可），并已生成**客户端授权码**（不是登录密码）。
+先在 Web of Science / Scopus / PubMed / 期刊网站把检索式保存成 Alert。以 Web of Science 为例：
 
-**第 1 步：初始化工作目录**（在综述项目根目录）
+1. 跑一次检索，确认结果就是你要跟踪的范围；
+2. 点 **Save search / 保存检索**，再选 **Create alert / 创建提醒**；
+3. 频率选 **Daily / 每天**，邮件格式选 **Full Record / 完整记录**（不要只选题名，否则解析不出题录）；
+4. 填收信邮箱，保存后等一封测试邮件。
+
+Scopus、PubMed、期刊网站也有类似入口。本文的解析器目前按 Web of Science 的 `full-record` 邮件模板写；换库前先看一封样本邮件（见本节末尾「已知限制」）。
+
+**第 1 步：开启邮箱 IMAP，拿到客户端授权码**
+
+脚本用的是 **IMAP + 用户名 + 客户端授权码**，不是网页登录密码。常见邮箱：
+
+| 邮箱 | 开启 IMAP | 生成授权码 | 服务器 |
+|---|---|---|---|
+| QQ | 设置 → 账号 → POP3/IMAP → 开启 IMAP | 同一页生成授权码 | `imap.qq.com:993` |
+| Gmail | 设置 → 转发和 POP/IMAP → 启用 IMAP | Google 账号 → 安全性 → 两步验证 → 应用专用密码 | `imap.gmail.com:993` |
+| Outlook / Microsoft 365 | 账户安全 → 高级安全选项 | 应用密码（需先开两步验证） | `outlook.office365.com:993` |
+
+注意：
+
+- 授权码通常只显示一次，复制下来填进 `config.json`；丢了就重新生成。
+- 组织/学校邮箱可能被管理员关闭 IMAP，或只允许 OAuth 现代认证；这种邮箱本脚本连不上，换 QQ / Gmail 等支持「用户名 + 授权码」的邮箱。
+- Gmail 的垃圾箱 IMAP 名通常是 `[Gmail]/Spam`，不是 `Junk`；不确定时先把 `folders` 只留 `["INBOX"]`。
+
+**第 2 步：初始化工作目录**（在综述项目根目录）
 
 ```powershell
 python .claude/skills/survey-ops/scripts/daily/init_daily.py --workdir ./daily
@@ -336,7 +358,7 @@ python3 .claude/skills/survey-ops/scripts/daily/init_daily.py --workdir ./daily
 
 装了合并包 `survey-manager` 的，把路径里的 `survey-ops` 换成 `survey-manager`。脚本会建 `daily/` 目录、复制拉信/解析/补全/调度脚本、生成 `config.json` 占位与 `CLAUDE.md` 分诊模板、写 `.gitignore`。重复运行只刷新脚本，不覆盖已有配置与分诊口径。
 
-**第 2 步：填 `daily/config.json`**
+**第 3 步：填 `daily/config.json`**
 
 | 字段 | 填什么 | 说明 |
 |---|---|---|
@@ -350,7 +372,33 @@ python3 .claude/skills/survey-ops/scripts/daily/init_daily.py --workdir ./daily
 | `ledger_path` | 台账路径 | 留空用项目根目录下的 `bib/verified.md`；相对路径以项目根目录为基准 |
 | `manuscript_globs` | 正文 glob 列表 | 留空用 `["manuscript/*.md", "docs/*.md"]` |
 
-**第 3 步：检查配置（不会显示授权码）**
+**`from_filter` / `match_domain` 怎么填？** 打开一封真实的 Alert 邮件，点开发件人，把完整地址整体填进 `from_filter`，把 `@` 后面的域名填进 `match_domain`。例如发件人是 `alerts-noreply@clarivate.com`，就填：
+
+```json
+"from_filter": "alerts-noreply@clarivate.com",
+"match_domain": "clarivate.com"
+```
+
+两个字段至少填一个；脚本按「完全等于 `from_filter`」或「域名等于 `match_domain`」匹配，不会把所有邮件都拉进来。
+
+一个最小可用的 `config.json` 长这样（**占位值必须换掉**；JSON 不能写注释，最后一项后面不能加逗号）：
+
+```json
+{
+  "imap_server": "imap.qq.com",
+  "imap_port": 993,
+  "use_ssl": true,
+  "email": "your-email@example.com",
+  "auth_code": "【待填】邮箱客户端授权码",
+  "from_filter": "alerts-noreply@clarivate.com",
+  "match_domain": "clarivate.com",
+  "folders": ["INBOX", "Junk"],
+  "ledger_path": "",
+  "manuscript_globs": ["manuscript/*.md", "docs/*.md"]
+}
+```
+
+**第 4 步：检查配置（不会显示授权码）**
 
 ```powershell
 cd daily
@@ -360,11 +408,11 @@ python check_config.py --test-imap   # 可选：实际登录一次，确认授�
 
 `check_config.py` 只报字段名与格式问题，并检查 `.gitignore` 是否排除了 `config.json`。退出码 `2`＝还没填好，`3`＝IMAP 登录失败（授权码过期、IMAP 未开、网络不通等）。`--test-imap` 会联网，但不会打印授权码。
 
-**第 4 步：改分诊口径**
+**第 5 步：改分诊口径**
 
 `daily/CLAUDE.md` 是从模板生成的，**必须按项目改**：综述范围、纳入/排除判据、三类引用角色、五分钟三问、A/B/C/D 类型定义。模板保留了原工作版的硬纪律，不要删：证据上限（邮件 C、摘要 B、全文 A）、`probable` DOI 必须写「待核」、覆盖缺口必须声明、只分诊不入账。
 
-**第 5 步：手动跑一遍**
+**第 6 步：手动跑一遍**
 
 ```powershell
 cd daily
@@ -373,7 +421,19 @@ python parse_alerts.py        # 解析
 python enrich_crossref.py     # 补 DOI/摘要并对重
 ```
 
-**第 6 步：建定时任务**
+正常会看到：
+
+- `pull_mail.py`：`[SAVE]` 逐封落盘，最后 `[DONE] 落盘 N 封`；
+- `parse_alerts.py`：`[PARSE] ...`，并在 `daily/inbox/` 生成 `_parsed.md`；
+- `enrich_crossref.py`：逐条 `[matched]` / `[probable]` / `[unmatched]`，最后 `[ENRICH] ...` 并生成 `_enriched.md`。
+
+**第一次跑可能拉取这个发件人以前的所有 Alert**，不只是今天的。脚本按 `Message-ID` 去重，不会重复处理已拉过的邮件，但首次可能一次落很多封。想先小范围试，可以：
+
+1. 先在邮箱里把旧 Alert 移到别的文件夹，只留最近一两封；
+2. 或把 `folders` 临时改成只含 `["INBOX"]`，并确认收件箱里没有积压；
+3. 或先只跑 `check_config.py --test-imap` 确认能登录，再决定是否全量跑。
+
+**第 7 步：建定时任务**
 
 Windows（每天 09:00）：
 
@@ -390,6 +450,13 @@ macOS / Linux：
 
 调度脚本只给 Claude 四个工具（Read / Write / Glob / Grep），**不给 Bash、不给联网**；邮件正文即使藏了指令也执行不了命令。空提醒（解析 0 条）会归档后安静退出，不生成空简报。
 
+定时任务能跑起来，还要求：
+
+- 运行任务的账户已经安装并登录 **Claude Code**，`claude` 命令在 PATH 里；
+- Windows 任务默认「仅当用户登录时运行」，电脑要开着并已登录该账户；可在任务属性里勾选「错过后尽快补跑」；
+- 计划任务的 PATH 与终端不同。`run_daily.ps1` 会依次找 `SURVEY_DAILY_PYTHON`、`python`、`py -3`；都不行时在 `daily/logs/YYYY-MM-DD.log` 里报错。
+- 第一次建议手动运行一次 `run_daily.ps1`，确认能生成 `daily/brief/YYYY-MM-DD.md`，再交给定时任务。
+
 **安全**：`config.json` 含授权码，等同于邮箱密码。`.gitignore` 已排除它；不要贴进聊天、issue、commit 或报告。授权码在邮箱网页重新生成后旧码立即失效，回来改这里再跑一次 `check_config.py --test-imap`。
 
 **边界与已知限制**：
@@ -398,6 +465,25 @@ macOS / Linux：
 - Web of Science 的 Alert 邮件常只展示前 5 条，其余题名可一行一条粘到 `daily/manual/extra_titles.txt`，简报会声明覆盖缺口；
 - `parse_alerts.py` 目前按 WOS 的 `full-record` 邮件模板解析；换 Scopus / PubMed / 期刊 Alert 前先看一封样本邮件，必要时改解析正则，不要盲跑；
 - 核心脚本直接复制自原 `mail_daily` 工作版，逐项来源与改动见 `scripts/daily/SOURCE.md`；真实配置、历史邮件、简报与去重台账未随包分发。
+
+**怎么接回主流程**：定时任务生成的是 `daily/brief/YYYY-MM-DD.md`。第二天在综述项目里打开 Claude Code，直接说：
+
+```
+读 daily/brief/2026-11-04.md，把 P0 第 2 条按流程纳入 3.2。
+```
+
+skill 会先由写作卷判断这句话要多强的证据，再由体系卷取全文、核著录、入台账，最后回写作卷落笔。**不要**让日报直接改正文或台账；它给的始终是候选。
+
+**出问题先看哪里**：
+
+| 现象 | 先查 | 处理 |
+|---|---|---|
+| `check_config.py` 报 `NOT READY` | 它列出的字段名 | 补 `config.json`；占位符不算填好 |
+| `--test-imap` 退出码 3 | 报错类型 | 授权码过期、IMAP 未开、邮箱地址不完整、网络不通 |
+| 登录成功但拉不到信 | `daily/logs/`、`from_filter` | 发件人地址/域名抄错，或 Alert 发到了垃圾箱 |
+| 日志出现 `无法打开文件夹 Junk` | `folders` 名称 | Gmail 改 `[Gmail]/Spam`；不确定先只留 `["INBOX"]` |
+| 解析 0 条 | 邮件格式 | 确认 Alert 选的是 Full Record；换库时先看样本邮件 |
+| 定时任务没跑 | 任务计划程序历史 | 是否登录、`claude` 是否在 PATH |
 
 完整说明见 [`skills/survey-ops/references/daily-lit.md`](skills/survey-ops/references/daily-lit.md)。
 

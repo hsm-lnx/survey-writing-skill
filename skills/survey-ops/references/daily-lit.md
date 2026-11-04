@@ -54,6 +54,8 @@
 
 ## 2. 初始化
 
+> 第一次配置、不熟悉邮箱设置时，先看 README §4.8：里面有「在数据库建 Alert → 开启 IMAP → 拿授权码 → 找发件人 → 填完整 `config.json`」的逐屏步骤和示例。本节只列字段语义。
+
 在综述项目根目录运行（把 `<skill>` 换成 `survey-ops` 或 `survey-manager` 的实际路径）：
 
 ```bash
@@ -73,7 +75,7 @@ python <skill>/scripts/daily/init_daily.py --workdir ./daily
 | `auth_code` | 邮箱**客户端授权码** | 不是登录密码；QQ 在「设置 → 账户 → POP3/IMAP」生成 |
 | `from_filter` | Alert 发件人完整地址 | 例如 `alerts-noreply@clarivate.com` |
 | `match_domain` | 发件人域名 | 用于兜住数据库换发信地址；QQ IMAP 不支持按域名服务端检索，脚本在客户端过滤 |
-| `folders` | 扫描的文件夹 | 默认 `["INBOX", "Junk"]`，垃圾箱也扫 |
+| `folders` | 扫描的文件夹 | 默认 `["INBOX", "Junk"]`，垃圾箱也扫；Gmail 垃圾箱通常叫 `[Gmail]/Spam`，不确定先只留 `INBOX` |
 | `ledger_path` | 台账路径 | 留空用项目根目录下的 `bib/verified.md`；相对路径以项目根目录为基准 |
 | `manuscript_globs` | 正文 glob 列表 | 留空用 `["manuscript/*.md", "docs/*.md"]`；只收 `.md` / `.txt` |
 
@@ -138,6 +140,7 @@ python enrich_crossref.py     # 补全，看 [matched]/[unmatched] 与 inbox/_en
 
 拉信要点：
 
+- **首次运行会拉取该发件人在扫描文件夹里的历史 Alert**，不只是当天。`Message-ID` 去重只防重复处理，不限制首次批量；想先小范围试，先把旧邮件移走，或临时把 `folders` 只留 `["INBOX"]`。
 - 全流程用 `UID SEARCH` + `UID FETCH`，不用序列号。手机端删信会造成 UID 空洞，
   旧式「序列号当 UID」会永久漏信。
 - 只读：用 `BODY.PEEK`，不标已读、不移动邮件。
