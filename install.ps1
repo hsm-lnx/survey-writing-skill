@@ -128,23 +128,25 @@ if ($ProjectRoot) {
     $base = Join-Path $env:USERPROFILE ".claude\skills"
     $scope = "用户级 ($env:USERPROFILE)"
 }
-$src = Join-Path $here "skills"
+$src = $here
 
-if (-not (Test-Path $src)) {
-    throw "找不到 skills\ —— 请在仓库根目录运行本脚本"
+foreach ($u in @("survey-writing", "survey-ops")) {
+    if (-not (Test-Path (Join-Path $here $u))) {
+        throw "找不到 $u\ —— 请在技能包根目录运行本脚本"
+    }
 }
 
 if (-not (Test-Path $base)) {
     New-Item -ItemType Directory -Force -Path $base | Out-Null
 }
 
-# 双卷 + 共享交接面，逐目录覆盖
-$units = @("survey-writing", "survey-ops", "_shared")
+# 双卷逐目录覆盖（交接契约随卷放在 references/ 下）
+$units = @("survey-writing", "survey-ops")
 foreach ($u in $units) {
     $s = Join-Path $src $u
     $d = Join-Path $base $u
     if (-not (Test-Path $s)) {
-        Write-Warn "skills\$u 不存在，跳过"
+        Write-Warn "$u\ 不存在，跳过"
         continue
     }
     if (Test-Path $d) {
@@ -241,7 +243,8 @@ if ($pythonCmd) {
 
 $pandoc = Get-Command pandoc -ErrorAction SilentlyContinue
 if ($pandoc) {
-    $ver = (& pandoc --version | Select-Object -First 1)
+    $pandocLines = & pandoc --version
+    $ver = $pandocLines[0]
     Write-Ok "$ver"
 } else {
     Write-Warn "pandoc 未安装 —— tools\convert.cmd (docx→md) 不可用，非必需"
@@ -300,8 +303,10 @@ if (-not $NoDoctor -and $pythonCmd -and (Test-Path $doctorRun)) {
 Write-Step "完成"
 Write-Host "  写作卷条文：$base\survey-writing\SKILL.md"
 Write-Host "  体系卷条文：$base\survey-ops\SKILL.md"
-Write-Host "  交接契约：  $base\_shared\handoff.md"
+Write-Host "  交接契约：  $base\survey-writing\references\handoff.md（两卷各一份）"
 Write-Host "  使用说明：  仓库根目录 README.md"
+Write-Host "  单 skill 平台：上传 survey-manager\（合并包，内含两卷）"
+Write-Host "  每日监控（可选）：$base\survey-ops\scripts\daily\init_daily.py --workdir <项目>\daily"
 if ($pythonCmd) {
     Write-Host ""
     if ($ProjectRoot) {

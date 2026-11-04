@@ -6,6 +6,8 @@
 
 装好之后，在项目里打开 Claude Code，直接用中文说你要做什么，不用记脚本、不用背命令。
 
+> **当前版本：1.0.1（2026-11-04）。** 本版新增「每日文献 Alert 监控」：把数据库保存检索的提醒邮件接进项目，每天自动拉信、补著录、去重、分诊，有新文献才出简报；日报只做候选，不直接写台账。
+
 > **它不是润色器。** 润色只是最后一道工序。它真正管的是：文献从哪来、能不能查证、每条引文撑不撑得住那句话、章节结构立不立得住、写完之后正文编号和文献台账对不对得上。
 
 **第一次用？** 按 §2 安装 → §3 看体检报告 → §5 走一遍「从模糊题目到章节骨架」。已经装好了，直接看 §6。
@@ -21,6 +23,7 @@
 | **立题与范围** | 「我想写一篇 XX 的中文综述，范围还没想好」 | 用几个问题收敛读者、篇幅、时间窗、边界；给出章节总纲供你确认 |
 | **建文献库** | 「按第 3 章的提纲把文献收进来」 | 逐条检索 Crossref／arXiv／AMiner，核验后写入 `bib/verified.md`，编号顺延；查不到的标 [待验证]，不编造 |
 | **日常管理** | 「这周新下的 20 篇入库」「Zotero 里会议论文类型错了，批量改」 | 台账去重、补字段、编号对账、变更 diff；Zotero 批量修正并写入后回读断言 |
+| **每日新文献** | 「把每天的 WOS 提醒接进来，自动分诊」 | 拉 Alert 邮件 → 解析 → Crossref/OpenAlex 补著录与摘要 → 与台账/正文/历史简报去重 → 按 P0/P1/P2 出中文简报；**只做候选，不直接入账** |
 | **搭骨架** | 「第 3 章按这个方向搭骨架」 | 章节总纲 → 段落提纲（每段一句论述指向 + 拟引台账编号），你确认后才动笔 |
 | **填血肉** | 「按提纲写 3.2」 | 证据池 → 段稿 → 删引测试 → 【作者 年份】占位替换成 [n] → 本节引用明细表 |
 | **自检交付** | 「核一下 3.2，哪几条撑不住『主流』这个说法」 | 引用覆盖报告、忠实性 A/B/C 证据行、结构体检表、句法病句清单 |
@@ -31,6 +34,7 @@
 - **不是「一句话出整篇」的黑箱。** 章节总纲、段落提纲、结构改动、强论断，这几处都会停下来等你确认。
 - **不是只改措辞的润色器。** 句法规则只是最外层，里面还有文献库、论断强度、忠实性核对和结构审查。
 - **不会编文献。** 查不到就是查不到，标 [待验证]，绝不伪造 DOI、卷号、页码。
+- **不会把日报直接塞进台账。** 每日 Alert 最多给到 C 级证据，补全摘要最多 B 级；要入账仍须回主项目取全文、核著录、走 A/B/C 定级。
 - **不会偷偷改你的正文。** 体系卷不碰正文；写作卷改动前先备份到 `reports/_raw/`。
 
 ### 和直接把稿子丢给 AI 写，有什么不同
@@ -74,7 +78,9 @@
 | **写作卷 `survey-writing`** | 学术判断 | 这句话说得过不过头、论断配多强的证据、概念怎么定、段落结构成不成立 |
 | **体系卷 `survey-ops`** | 机械运转 | 文献核验、全文定位、台账编号、Zotero 写入、批量作业、落盘对账 |
 
-一句话判据：**「读起来站不站得住」→ 写作卷；「对账对不对得上」→ 体系卷。** 两卷怎么交接写在 `skills/_shared/handoff.md`。
+一句话判据：**「读起来站不站得住」→ 写作卷；「对账对不对得上」→ 体系卷。** 两卷怎么交接写在 `survey-writing/references/handoff.md`（两卷各存一份，内容一致）。
+
+本地 Claude Code 可以同时装两卷；外部平台一次只能上传一个 skill 时，上传合并包 `survey-manager/`——它把两卷作为**内部模块**放在同一个 skill 里，交接契约、脚本、模板都随包带上，不会出现「装了写作卷、找不到体系卷」的断链。
 
 你不需要记住这个分工。说人话，规范会自己分流；判不准时它会反问你。
 
@@ -96,6 +102,7 @@
 | **Zotero 桌面版** | 推荐 | 本地 PDF 全文；体系卷 §7.4 的「两处查找」 | 只能扫 `pdfs/`，本地全文来源少一处 | `--fix --with-zotero` 自动装，或到 [zotero.org/download](https://www.zotero.org/download/) |
 | Zotero Web API key + userID | 可选 | 批量修正 Zotero 条目字段 | Zotero 直写通道不可用 | `python .claude/doctor.py --configure` 交互配置 |
 | AMiner token | 可选 | 中文文献、无 DOI 老文献核验 | AMiner 层不可用；Crossref/arXiv 照常 | `--configure` 交互配置 |
+| 邮箱 Alert + IMAP 授权码 | 可选（仅每日监控） | 自动拉取保存检索的新文献 | 不做每日监控就不用配 | 邮箱设置里开启 IMAP，生成客户端授权码；填 `daily/config.json` |
 | 大模型 API key | **不需要** | — | — | 模型由你的 Claude Code 账号提供，与本仓库无关 |
 
 **一句话：只有 Python 和网络是硬门槛；Zotero、AMiner、pandoc、curl 都是可选项，不配也能用核心功能。**
@@ -129,7 +136,7 @@ bash install.sh ~/my_survey --auto-install
 
 脚本会做五件事：
 
-1. 把两卷 skill 与 `_shared` 装到 `<项目>/.claude/skills/`——在该项目里开 Claude Code 就会自动加载；
+1. 把两卷 skill 装到 `<项目>/.claude/skills/`——在该项目里开 Claude Code 就会自动加载；
 2. 建好 `manuscript/ pdfs/ bib/ docs/ reports/ reports/_raw/` 骨架，并写入台账与进度板表头；
 3. 检查 Python / pandoc / curl；带 `-AutoInstall` / `--auto-install` 时，缺什么就尝试用系统包管理器装；
 4. 把体检脚本 `doctor.py` 和密钥说明 `KEY_SETUP.md` 复制到 `<项目>/.claude/`；
@@ -306,6 +313,48 @@ export HTTPS_PROXY="http://你的代理地址:端口"
 
 doctor 会显示检测到的代理变量，方便排查。
 
+### 4.8 邮箱 Alert + IMAP 授权码（可选，仅每日监控）
+
+**用途**：把 Web of Science（或同类数据库）保存检索的 Alert 邮件接进项目，每天自动拉信、解析、补著录、去重、分诊。不做每日监控就完全不用配。
+
+**前提**：数据库里已建好保存检索／Alert，提醒发到你的邮箱；邮箱支持 IMAP。QQ 邮箱在「设置 → 账户 → POP3/IMAP」开启服务并生成**客户端授权码**（不是登录密码）；Gmail、Outlook 同理。
+
+**配置步骤**（在综述项目根目录）：
+
+```bash
+python .claude/skills/survey-ops/scripts/daily/init_daily.py --workdir ./daily
+```
+
+合并包安装时把路径换成 `.claude/skills/survey-manager/scripts/daily/init_daily.py`。然后：
+
+1. 编辑 `daily/config.json`：`email`、`auth_code`、`from_filter`、`match_domain`；`ledger_path` 与 `manuscript_globs` 可留空。
+2. 编辑 `daily/CLAUDE.md`：把【待填】处改成你的综述范围、纳入／排除判据。模板按原始工作版 `mail_daily/CLAUDE.md` 的结构脱敏，保留输入优先级、核心/组件/邻域三类、硬门槛、五分钟三问、证据上限、四处去重与空简报纪律；只把项目专属的表号、计数、文件名和截止日换成占位。四条硬纪律不要删：证据上限、`probable` DOI 待核、覆盖缺口声明、只分诊不入账。
+3. 手动测一遍：
+
+   ```bash
+   cd daily
+   python pull_mail.py
+   python parse_alerts.py
+   python enrich_crossref.py
+   ```
+
+4. 建定时任务。Windows：
+
+   ```powershell
+   schtasks /Create /TN "Survey Daily Brief" /SC DAILY /ST 09:00 `
+     /TR "powershell -ExecutionPolicy Bypass -File D:\my_survey\daily\run_daily.ps1" /F
+   ```
+
+   macOS / Linux 用 cron 调 `daily/run_daily.sh`（首次先 `chmod +x`）。
+
+**边界**：日报只出候选简报，**不写 `bib/verified.md`、不改正文**。Alert 邮件最多 C 级，补全摘要最多 B 级；要写进正文，仍按 §6 的固定顺序取证入账。
+
+**安全**：`daily/config.json` 含邮箱授权码，等同邮箱密码。`init_daily.py` 会写 `.gitignore` 排除它；不要把它贴进聊天、issue 或 commit。
+
+**来源**：每日监控的核心脚本来自原 `mail_daily` 工作版，不是另写的替代实现。`parse_alerts.py` 逐字节相同；`pull_mail.py`、`enrich_crossref.py`、`run_daily.ps1` 只改了配置路径与解释器定位；`run_daily.sh` 是跨平台端口，`init_daily.py` 是产品化初始化。逐项对照见安装后的 `daily/SOURCE.md`，或包内 `scripts/daily/SOURCE.md`。真实 `config.json`、历史邮件、简报与去重台账均未复制。
+
+**换数据库**：`parse_alerts.py` 目前按 Web of Science 的 `full-record` 邮件结构解析。Scopus、PubMed、期刊 Alert 的模板不同，先看一封样本邮件再改解析正则，不要盲跑。
+
 ---
 
 ## 5. 第一次用：从一个模糊题目开始
@@ -384,6 +433,8 @@ doctor 会显示检测到的代理变量，方便排查。
 | 看全文引用有没有漏 | 「核一下全文的引用覆盖」 | 体系卷：`cite_coverage.py` |
 | 判断引文撑不撑得住 | 「这条引文原文到底怎么说的」 | 写作卷 §4.2 → 体系卷 §7.4 取全文 |
 | 文献库周维护 | 「把这周新增的文献整理入库」 | 体系卷：台账 diff、去重、补字段、编号顺延 |
+| 接每日新文献 | 「把每天的 WOS 提醒接进来，自动分诊」 | 体系卷 §16：`init_daily.py` 建目录 → 填 `config.json` → `run_daily` |
+| 看今天有没有值得读的新文 | 「跑一下今天的文献简报」 | 读 `daily/brief/YYYY-MM-DD.md`；没有新增就不生成，保持安静 |
 | 批量修 Zotero | 「Zotero 里会议论文类型错了，批量改」 | 体系卷 §10：写入 + 回读断言 |
 | 调整章节结构 | 「把第 4 章并进第 3 章」 | 写作卷 §9：冲击扫描 → 返工清单 |
 | 让 skill 自己变强 | 「演进 skill」 | 两卷各自的演进通道：病例 → 新条文 |
@@ -397,6 +448,8 @@ doctor 会显示检测到的代理变量，方便排查。
 3. **写作卷最后落笔**——按拿回的编号、等级和限定词写，不得外推。
 
 跳过第 1 步，体系卷不知道该找什么等级的证据；跳过第 3 步的限定词，文献结论就会被写过头。这是同一批引文反复返工的最常见原因。
+
+每日 Alert 简报也受这个顺序约束。简报里的 P0 只是「值得马上看」，不是「已经可以引」；要把某条候选写进正文，同样先由写作卷定强度，再由体系卷取全文、入台账。
 
 ---
 
@@ -456,6 +509,8 @@ python .claude/skills/survey-ops/scripts/faithfulness_check.py 证据表.md -c �
 
 一律走环境变量：脚本不读 `.env` 文件，也不得硬编码 key。填法见 [`KEY_SETUP.md`](KEY_SETUP.md)，或直接跑 `python .claude/doctor.py --configure`。
 
+**每日监控是唯一的例外，而且不放进本仓库**：邮箱 IMAP 授权码只能填在你项目里的 `daily/config.json`。它等同邮箱密码，`init_daily.py` 会写 `.gitignore` 排除；不要提交、不要贴进聊天或 issue。
+
 **不要把 key 写进** `CLAUDE.md`、脚本注释、报告、聊天记录、issue、PR、commit message。`.gitignore` 已排除 `.env`、`*.env`、`*.key`、`*.token`，但**不要依赖它**——提交前还是看一眼 `git status`。
 
 ---
@@ -468,24 +523,69 @@ python .claude/skills/survey-ops/scripts/faithfulness_check.py 证据表.md -c �
 install.ps1 / install.sh                 一键安装（Windows / macOS·Linux）
 tools/
 ├── doctor.py                            环境体检 + 自动安装 + 交互式配置密钥
+├── build_bundle.py                      由两卷重新生成 survey-manager/ 合并包
 └── convert.cmd                          docx → markdown（pandoc）
 KEY_SETUP.md                             密钥申请与填写明细
-skills/
-├── survey-writing/                      写作卷（学术判断）
-│   ├── SKILL.md                         §0–§6、§9、§11–§14
-│   ├── references/citation_style_notes.md   著录转换规则
-│   └── templates/section_workflow.md        章节五步循环模板
-├── survey-ops/                          体系卷（机械运转）
-│   ├── SKILL.md                         §6A、§7、§8、§10、§15
-│   └── scripts/
-│       ├── verify_round1.py             存在性核验：Crossref DOI + 书目 + arXiv
-│       ├── aminer_search.py             AMiner 层（需 AMINER_API_KEY）
-│       ├── arxiv_curl.py                arXiv API 的 curl 兜底（urllib 被 406 时）
-│       ├── cite_coverage.py             正文引用覆盖核对（写作卷 §4.1）
-│       ├── faithfulness_check.py        忠实性核对证据行校验（写作卷 §4.2）
-│       └── zotero_client.py             Zotero Web API 直写通道（体系卷 §10）
-└── _shared/handoff.md                   两卷交接契约
+survey-writing/                          写作卷（学术判断）
+├── SKILL.md                             §0–§6、§9、§11–§14
+├── references/
+│   ├── citation_style_notes.md          著录转换规则
+│   └── handoff.md                       两卷交接契约（与 survey-ops 各存一份）
+└── templates/
+    └── section_workflow.md              章节五步循环模板
+survey-ops/                              体系卷（机械运转）
+├── SKILL.md                             §6A、§7、§8、§10、§15、§16
+├── references/
+│   ├── handoff.md                       两卷交接契约（与 survey-writing 各存一份）
+│   └── daily-lit.md                     每日 Alert 监控：配置、分诊、边界
+├── templates/
+│   ├── daily_triage.md                  每日分诊规则模板
+│   └── daily_config.example.json        邮箱配置占位模板
+└── scripts/
+    ├── verify_round1.py                 存在性核验：Crossref DOI + 书目 + arXiv
+    ├── aminer_search.py                 AMiner 层（需 AMINER_API_KEY）
+    ├── arxiv_curl.py                    arXiv API 的 curl 兜底（urllib 被 406 时）
+    ├── cite_coverage.py                 正文引用覆盖核对（写作卷 §4.1）
+    ├── faithfulness_check.py            忠实性核对证据行校验（写作卷 §4.2）
+    ├── zotero_client.py                 Zotero Web API 直写通道（体系卷 §10）
+    └── daily/                           每日 Alert 监控
+        ├── init_daily.py                初始化工作目录（建目录、复制脚本、生成配置）
+        ├── pull_mail.py                 IMAP 拉信，按 Message-ID 去重
+        ├── parse_alerts.py              Alert HTML → _parsed.md
+        ├── enrich_crossref.py           题名→DOI→著录/摘要，并与台账/正文对重
+        ├── run_daily.ps1                Windows 每日总调度
+        ├── run_daily.sh                 macOS/Linux 每日总调度
+        ├── check_alert_links.py         只读诊断：邮件记录数与 View all 链接
+        ├── uid_gaps.py                  只读诊断：邮箱 UID 空洞
+        └── SOURCE.md                    与原始 mail_daily 的逐项来源对照
+survey-manager/                           合并包：单 skill 上传用（内含两卷）
+├── SKILL.md                             路由入口：任务分流 + 交接顺序
+├── references/
+│   ├── survey-writing.md                写作卷全文（模块）
+│   ├── survey-ops.md                    体系卷全文（模块）
+│   ├── handoff.md                       交接契约（合并包内唯一一份）
+│   ├── citation_style_notes.md          著录转换规则
+│   ├── daily-lit.md                     每日 Alert 监控说明
+│   └── KEY_SETUP.md                     密钥申请与填写明细
+├── scripts/                             与 survey-ops/scripts 同源（含 daily/）
+├── templates/
+│   ├── section_workflow.md              章节五步循环模板
+│   ├── daily_triage.md                  每日分诊规则模板
+│   └── daily_config.example.json        邮箱配置占位模板
+└── tools/
+    ├── convert.cmd                      docx → markdown（pandoc）
+    └── doctor.py                        环境体检 + 交互式配置密钥
 ```
+
+> **三种部署方式，按平台选一种：**
+>
+> - **本地 Claude Code（推荐）**：用安装脚本装 `survey-writing/` 与 `survey-ops/` 两卷。两卷在同一会话中加载，按 `references/handoff.md` 定义的接口协同。
+> - **外部平台，一次只能加载一个 skill**：上传 `survey-manager/` **整个目录**。两卷是同一个 skill 的内部模块，脚本、模板、交接契约都在包内，不存在跨 skill 路径断链。平台加载后先读入口 `SKILL.md`，再按任务读对应模块。
+> - **外部平台，支持多 skill 并存**：可分别上传 `survey-writing/` 与 `survey-ops/`；每个目录的一级就是 `SKILL.md`，`references/`、`scripts/`、`templates/` 随目录一起带上。
+>
+> 合并包按「平台允许 skill 读取包内 `references/` 文件」设计，多数 skill 平台如此。若你的平台只注入 `SKILL.md` 正文、不提供文件读取，`references/` 里的模块就读不到，需要另做一个单文件精简版。
+>
+> 两份独立 skill 与合并包入口（`survey-manager/SKILL.md`）的 YAML frontmatter 都已按平台字段填好（`name` / `display_name` / `description_zh` / `description_en` / `examples_zh` / `examples_en` / `version` / `author`）。**改了独立两卷后，在包根目录运行 `python tools/build_bundle.py` 重新生成合并包**，否则 `survey-manager/` 里的模块会与源文件漂移；脚本会顺带检查两卷的 `handoff.md` 是否一致，不一致直接报错。
 
 安装后，`doctor.py` 和 `KEY_SETUP.md` 会各复制一份到 `<项目>/.claude/`（用户级安装则是 `~/.claude/`），所以装完不必再回到仓库目录也能体检和配置。
 
@@ -502,6 +602,7 @@ bib/verified.md  文献台账：只增不改、编号顺延
 docs/            progress.md（安装时建）；claims.md、concepts.md 随写作建立
 reports/         回执与报告
 reports/_raw/    接口原始返回、改动前备份
+daily/           每日 Alert 监控（可选，由 init_daily.py 建；config.json 禁止提交）
 ```
 
 这三样是它的「记忆」：
@@ -581,6 +682,10 @@ A：体系卷不会自行改正文；正文改动由写作卷做，且改动前�
 
 A：都可以，说人话就行。规范会按「读起来站不站得住 / 对账对不对得上」分流。判不准时它会反问你。
 
+**Q：每日简报会不会把新文献直接写进台账？**
+
+A：不会。日报只做分诊，输出候选简报，不碰 `bib/verified.md` 和正文。Alert 邮件最多 C 级证据，补全摘要最多 B 级；要入账仍须取全文、核著录、走 A/B/C 定级。
+
 **Q：写了一半换电脑 / 隔一个月回来，还能接上吗？**
 
 A：能。台账、进度板、概念台账、当前提纲都在项目目录里；新机器上重装 skill 并跑一次 `doctor.py` 即可。
@@ -604,7 +709,8 @@ A：能。skill 已经复制到 `<项目>/.claude/skills/`；`doctor.py` 和 `KE
 - Python 3.8+，仅标准库
 - pandoc（`tools/convert.cmd` 用）、curl（`arxiv_curl.py` 用），都非必需
 - Zotero 桌面版（本地全文，推荐）、Zotero Web API（直写，可选）、AMiner（中文/无 DOI 核验，可选）
-- 网络：Crossref、arXiv（必需）；AMiner、Zotero API（配了才需要）
+- 每日监控（可选）：支持 IMAP 的邮箱 + 客户端授权码；网络需 Crossref、OpenAlex
+- 网络：Crossref、arXiv（必需）；AMiner、Zotero API、IMAP、OpenAlex（配了才需要）
 
 本包是**节点快照**，不跟上游自动同步。需要新条文时，按写作卷 §0 在你自己的项目里长出来，再决定是否回灌本仓库。
 

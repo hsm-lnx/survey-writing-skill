@@ -44,16 +44,16 @@ else
     SKEL="$PWD"
 fi
 
-SRC="$HERE/skills"
-if [ ! -d "$SRC" ]; then
-    echo "错误：找不到 skills/ —— 请在仓库根目录运行本脚本" >&2
+SRC="$HERE"
+if [ ! -d "$HERE/survey-writing" ] || [ ! -d "$HERE/survey-ops" ]; then
+    echo "错误：找不到 survey-writing/ 或 survey-ops/ —— 请在技能包根目录运行本脚本" >&2
     exit 1
 fi
 
 mkdir -p "$BASE"
-for u in survey-writing survey-ops _shared; do
+for u in survey-writing survey-ops; do
     if [ ! -d "$SRC/$u" ]; then
-        echo "  [跳过] skills/$u 不存在"
+        echo "  [跳过] $u 不存在"
         continue
     fi
     cp -R "$SRC/$u" "$BASE/"
@@ -190,7 +190,7 @@ else
 fi
 
 if command -v pandoc >/dev/null 2>&1; then
-    echo "  [ok] $(pandoc --version 2>&1 | head -1)"
+    echo "  [ok] $(pandoc --version 2>&1 | sed -n '1p')"
 else
     echo "  [!] pandoc 未安装 —— tools/convert.cmd (docx→md) 不可用，非必需"
     if [ "$AUTO_INSTALL" = "1" ]; then
@@ -247,8 +247,10 @@ fi
 echo "== 完成 =="
 echo "  写作卷条文：$BASE/survey-writing/SKILL.md"
 echo "  体系卷条文：$BASE/survey-ops/SKILL.md"
-echo "  交接契约：  $BASE/_shared/handoff.md"
+echo "  交接契约：  $BASE/survey-writing/references/handoff.md（两卷各一份）"
 echo "  使用说明：  仓库根目录 README.md"
+echo "  单 skill 平台：上传 survey-manager/（合并包，内含两卷）"
+echo "  每日监控（可选）：$BASE/survey-ops/scripts/daily/init_daily.py --workdir <项目>/daily"
 if [ -n "$PY" ]; then
     echo ""
     if [ -n "$ROOT" ]; then
