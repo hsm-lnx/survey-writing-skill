@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# survey-writing skill 一键部署（macOS / Linux）
+# survey-writing / survey-ops 双卷 skill 一键部署（macOS / Linux）
 # 用法: bash install.sh [项目目录]
 set -euo pipefail
 
@@ -7,7 +7,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${1:-}"
 
 echo
-echo "== survey-writing skill 部署 =="
+echo "== survey-writing / survey-ops 部署 =="
 echo
 
 if [ -n "$ROOT" ]; then
@@ -20,20 +20,26 @@ else
     SKEL="$PWD"
 fi
 
-SRC="$HERE/skills/survey-writing"
+SRC="$HERE/skills"
 if [ ! -d "$SRC" ]; then
-    echo "错误：找不到 skills/survey-writing —— 请在仓库根目录运行本脚本" >&2
+    echo "错误：找不到 skills/ —— 请在仓库根目录运行本脚本" >&2
     exit 1
 fi
 
 mkdir -p "$BASE"
-cp -R "$SRC" "$BASE/"
-echo "[ok] skill   -> $BASE/survey-writing"
+for u in survey-writing survey-ops _shared; do
+    if [ ! -d "$SRC/$u" ]; then
+        echo "  [跳过] skills/$u 不存在"
+        continue
+    fi
+    cp -R "$SRC/$u" "$BASE/"
+    echo "  [ok] $BASE/$u"
+done
 echo "     作用域   $SCOPE"
 echo
 
 # ---- 项目骨架 ----
-for d in manuscript bib docs reports reports/_raw; do
+for d in manuscript pdfs bib docs reports reports/_raw; do
     if [ -d "$SKEL/$d" ]; then
         echo "  [存在] $d"
     else
@@ -46,7 +52,7 @@ if [ ! -f "$SKEL/bib/verified.md" ]; then
     cat > "$SKEL/bib/verified.md" <<'EOF'
 # 文献台账
 
-只增不改、编号顺延。新增条目先走 SKILL.md §7 验证，再入账。
+只增不改、编号顺延。新增条目先走 survey-ops §7 验证，再入账。
 
 | 编号 | 著录 | 依据等级 | 备注 |
 |------|------|----------|------|
@@ -84,4 +90,7 @@ done
 echo
 
 echo "== 完成 =="
-echo "用法见 README.md；密钥填法见 KEY_SETUP.md；条文见 $BASE/survey-writing/SKILL.md"
+echo "用法见 README.md；密钥填法见 KEY_SETUP.md"
+echo "  写作卷条文：$BASE/survey-writing/SKILL.md"
+echo "  体系卷条文：$BASE/survey-ops/SKILL.md"
+echo "  交接契约：  $BASE/_shared/handoff.md"

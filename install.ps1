@@ -1,6 +1,6 @@
 ﻿#Requires -Version 5.1
 <#
-    survey-writing skill 一键部署
+    survey-writing / survey-ops 双卷 skill 一键部署
     用法:
       powershell -ExecutionPolicy Bypass -File install.ps1
       powershell -ExecutionPolicy Bypass -File install.ps1 -ProjectRoot D:\my_survey
@@ -16,7 +16,7 @@ $here = $PSScriptRoot
 if (-not $here) { $here = (Get-Location).Path }
 
 Write-Host ""
-Write-Host "== survey-writing skill 部署 ==" -ForegroundColor Cyan
+Write-Host "== survey-writing / survey-ops 部署 ==" -ForegroundColor Cyan
 Write-Host ""
 
 # ---------- 1. skill 安装位置 ----------
@@ -27,21 +27,31 @@ if ($ProjectRoot) {
     $base = Join-Path $env:USERPROFILE ".claude\skills"
     $scope = "用户级 ($env:USERPROFILE)"
 }
-$dest = Join-Path $base "survey-writing"
-$src = Join-Path $here "skills\survey-writing"
+$src = Join-Path $here "skills"
 
 if (-not (Test-Path $src)) {
-    throw "找不到 skills\survey-writing —— 请在仓库根目录运行本脚本"
+    throw "找不到 skills\ —— 请在仓库根目录运行本脚本"
 }
 
 if (-not (Test-Path $base)) {
     New-Item -ItemType Directory -Force -Path $base | Out-Null
 }
-if (Test-Path $dest) {
-    Write-Host "[更新] 目标已存在，覆盖同名文件（不影响其他 skill）"
+
+# 双卷 + 共享交接面，逐目录覆盖
+$units = @("survey-writing", "survey-ops", "_shared")
+foreach ($u in $units) {
+    $s = Join-Path $src $u
+    $d = Join-Path $base $u
+    if (-not (Test-Path $s)) {
+        Write-Host "[跳过] skills\$u 不存在" -ForegroundColor Yellow
+        continue
+    }
+    if (Test-Path $d) {
+        Write-Host "[更新] $u （覆盖同名文件，不影响其他 skill）"
+    }
+    Copy-Item -Path $s -Destination $base -Recurse -Force
+    Write-Host "  [ok] $d" -ForegroundColor Green
 }
-Copy-Item -Path $src -Destination $base -Recurse -Force
-Write-Host "[ok] skill -> $dest" -ForegroundColor Green
 Write-Host "     作用域：$scope"
 Write-Host ""
 
@@ -50,7 +60,7 @@ if (-not $SkipSkeleton) {
     if ($ProjectRoot) { $root = $ProjectRoot } else { $root = (Get-Location).Path }
     Write-Host "项目骨架 -> $root"
 
-    $dirs = @("manuscript", "bib", "docs", "reports", "reports\_raw")
+    $dirs = @("manuscript", "pdfs", "bib", "docs", "reports", "reports\_raw")
     foreach ($d in $dirs) {
         $p = Join-Path $root $d
         if (-not (Test-Path $p)) {
@@ -66,7 +76,7 @@ if (-not $SkipSkeleton) {
         $head = @"
 # 文献台账
 
-只增不改、编号顺延。新增条目先走 SKILL.md §7 验证，再入账。
+只增不改、编号顺延。新增条目先走 survey-ops §7 验证，再入账。
 
 | 编号 | 著录 | 依据等级 | 备注 |
 |------|------|----------|------|
@@ -146,5 +156,8 @@ if ($unset.Count -gt 0) {
     Write-Host "未设置的环境变量：$($unset -join ', ')"
     Write-Host "对应的脚本会报错退出，其余功能不受影响。填法见 KEY_SETUP.md。"
 }
-Write-Host "用法与依赖说明见 README.md；规范条文见 $dest\SKILL.md"
+Write-Host "用法与依赖说明见 README.md"
+Write-Host "  写作卷条文：$base\survey-writing\SKILL.md"
+Write-Host "  体系卷条文：$base\survey-ops\SKILL.md"
+Write-Host "  交接契约：  $base\_shared\handoff.md"
 Write-Host ""

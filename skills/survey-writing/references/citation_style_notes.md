@@ -46,7 +46,7 @@ A. B. Author, C. D. Author, and E. F. Author, "Paper title," Journal Name, vol. 
 ## 3. 全称到缩写的转换规则
 
 - 只转换不回写：转换只发生在生成的参考文献表；`bib/verified.md` 永远保持全称底账。
-- 英文期刊缩写对照表内置于 `skills/survey-writing/scripts/verify_round1.py`（`ABBREV` 映射）。转换脚本直接复用该表，禁止手造缩写。
+- 英文期刊缩写对照表内置于 `skills/survey-ops/scripts/verify_round1.py`（`ABBREV` 映射）。转换脚本直接复用该表，禁止手造缩写。
 - `ABBREV` 当前是制造业/控制/材料类刊物的约 30 条种子表，可自行扩充：查 ISO 4 / 各刊官方缩写名录，查到后补进映射。
 - 表中无映射的英文刊名：查 ISO 4 名录，查得到用名录缩写，查不到或有疑义用全称，不得自创。
 - 中文刊名：投中文刊按 GB/T 用中文全称；投英文刊时用拼音/英文译名并括注。
