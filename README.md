@@ -14,7 +14,7 @@
 ## 三步部署
 
 ```powershell
-git clone <本仓库地址> survey-writing-skill
+git clone https://github.com/hsm-lnx/survey-writing-skill.git
 cd survey-writing-skill
 powershell -ExecutionPolicy Bypass -File install.ps1
 ```
