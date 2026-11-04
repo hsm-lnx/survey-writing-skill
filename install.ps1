@@ -56,8 +56,18 @@ Write-Host "     作用域：$scope"
 Write-Host ""
 
 # ---------- 2. 项目骨架 ----------
+# 若目标目录就是本仓库自身（用户照 README 在 clone 里直接跑），不建骨架，免得弄脏干净的 clone
 if (-not $SkipSkeleton) {
     if ($ProjectRoot) { $root = $ProjectRoot } else { $root = (Get-Location).Path }
+    if ([IO.Path]::GetFullPath($root).TrimEnd("\") -eq [IO.Path]::GetFullPath($here).TrimEnd("\")) {
+        Write-Host "[跳过骨架] 当前目录是本仓库自身，不在这里建 manuscript/pdfs 等目录。" -ForegroundColor Yellow
+        Write-Host "           到你的项目目录里跑：install.ps1 -ProjectRoot <项目目录>" -ForegroundColor Yellow
+        Write-Host ""
+        $SkipSkeleton = $true
+    }
+}
+
+if (-not $SkipSkeleton) {
     Write-Host "项目骨架 -> $root"
 
     $dirs = @("manuscript", "pdfs", "bib", "docs", "reports", "reports\_raw")

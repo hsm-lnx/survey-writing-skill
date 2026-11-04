@@ -39,6 +39,17 @@ echo "     作用域   $SCOPE"
 echo
 
 # ---- 项目骨架 ----
+# 若目标目录就是本仓库自身（用户照 README 在 clone 里直接跑），不建骨架，免得弄脏干净的 clone
+if [ "$(cd "$SKEL" && pwd -P)" = "$(cd "$HERE" && pwd -P)" ]; then
+    echo "  [跳过骨架] 当前目录是本仓库自身，不在这里建 manuscript/pdfs 等目录。"
+    echo "             到你的项目目录里跑：bash install.sh <项目目录>"
+    echo
+    SKIP_SKELETON=1
+else
+    SKIP_SKELETON=0
+fi
+
+if [ "$SKIP_SKELETON" = "0" ]; then
 for d in manuscript pdfs bib docs reports reports/_raw; do
     if [ -d "$SKEL/$d" ]; then
         echo "  [存在] $d"
@@ -70,10 +81,17 @@ EOF
     echo "  [新建] docs/progress.md"
 fi
 echo
+fi  # SKIP_SKELETON
 
 # ---- 依赖 ----
 echo "依赖检查"
-command -v python3 >/dev/null 2>&1 && echo "  [ok] $(python3 --version 2>&1)" || echo "  [缺] python3"
+if command -v python3 >/dev/null 2>&1 && python3 -c "" >/dev/null 2>&1; then
+    echo "  [ok] $(python3 --version 2>&1)"
+elif command -v python >/dev/null 2>&1 && python -c "" >/dev/null 2>&1; then
+    echo "  [ok] $(python --version 2>&1)"
+else
+    echo "  [缺] python —— 核验脚本无法运行"
+fi
 command -v pandoc  >/dev/null 2>&1 && echo "  [ok] $(pandoc --version 2>&1 | head -1)" || echo "  [缺] pandoc（非必需）"
 command -v curl    >/dev/null 2>&1 && echo "  [ok] curl" || echo "  [缺] curl（非必需）"
 echo
