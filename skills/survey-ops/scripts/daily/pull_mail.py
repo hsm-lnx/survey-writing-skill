@@ -157,7 +157,8 @@ def main():
     except Exception as e:
         print(f"[ABORT] config.json 不是合法 JSON：{e}")
         sys.exit(2)
-    if not cfg.get("imap_server") or "imap" not in cfg.get("imap_server", ""):
+    server = str(cfg.get("imap_server", "") or "")
+    if not server.strip() or "待填" in server:
         print("[ABORT] config.json 里 imap_server 还没填，先去邮箱网页看收发信设置。")
         sys.exit(2)
     auth_code = str(cfg.get("auth_code", ""))

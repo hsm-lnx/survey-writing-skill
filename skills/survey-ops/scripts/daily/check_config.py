@@ -82,7 +82,7 @@ def main() -> int:
         return value
 
     need("imap_server", "IMAP 服务器",
-         lambda v: isinstance(v, str) and "imap" in v.lower())
+         lambda v: isinstance(v, str) and "." in v.strip() and " " not in v.strip())
     need("imap_port", "IMAP 端口",
          lambda v: isinstance(v, int) and 1 <= v <= 65535)
     email = need("email", "收信邮箱完整地址",

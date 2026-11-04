@@ -710,7 +710,7 @@ def check_daily_config(rep, project_root):
 
     problems = []
     server = cfg.get("imap_server")
-    if blank(server) or "imap" not in server.lower() or placeholder(server):
+    if blank(server) or "." not in server.strip() or " " in server.strip() or placeholder(server):
         problems.append("imap_server")
     port = cfg.get("imap_port")
     if not isinstance(port, int) or not (1 <= port <= 65535):
