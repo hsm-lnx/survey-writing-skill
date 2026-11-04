@@ -1,5 +1,7 @@
 # survey-writing / survey-ops：中文综述写作助手
 
+> **版本 1.0.1（2026-11-04）**：新增可选的**每日文献 Alert 监控**——把 Web of Science 等数据库的保存检索接进项目，每天自动拉信、解析、补著录、去重、分诊，有新文献才出简报，没新增就安静。见 [§4.8](#48-邮箱-alert--imap-授权码可选)。
+
 一套给**中文综述写作**用的 Claude Code skill。你给它一个模糊的题目，它按固定流程把这件事做完：
 
 **收敛范围 → 建文献库 → 搭章节骨架 → 逐段写 → 逐条核 → 交付可查的稿子。**
@@ -10,7 +12,7 @@
 
 **第一次用？** 按 §2 安装 → §3 看体检报告 → §5 走一遍「从模糊题目到章节骨架」。已经装好了，直接看 §6。
 
-**目录：** [它能做什么](#0-它到底能帮你做什么) · [怎么产出](#1-一条综述是怎么产出的) · [安装](#2-五分钟上手) · [体检](#3-体检报告怎么读) · [第一次用](#5-第一次用从一个模糊题目开始) · [日常用法](#6-日常怎么用按任务查) · [质量闸门](#7-它拦什么质量闸门) · [FAQ](#10-常见问题faq)
+**目录：** [它能做什么](#0-它到底能帮你做什么) · [怎么产出](#1-一条综述是怎么产出的) · [安装](#2-五分钟上手) · [体检](#3-体检报告怎么读) · [外部工具](#4-外部工具逐个说明) · [每日监控](#48-邮箱-alert--imap-授权码可选) · [第一次用](#5-第一次用从一个模糊题目开始) · [日常用法](#6-日常怎么用按任务查) · [质量闸门](#7-它拦什么质量闸门) · [FAQ](#10-常见问题faq)
 
 ---
 
@@ -21,6 +23,7 @@
 | **立题与范围** | 「我想写一篇 XX 的中文综述，范围还没想好」 | 用几个问题收敛读者、篇幅、时间窗、边界；给出章节总纲供你确认 |
 | **建文献库** | 「按第 3 章的提纲把文献收进来」 | 逐条检索 Crossref／arXiv／AMiner，核验后写入 `bib/verified.md`，编号顺延；查不到的标 [待验证]，不编造 |
 | **日常管理** | 「这周新下的 20 篇入库」「Zotero 里会议论文类型错了，批量改」 | 台账去重、补字段、编号对账、变更 diff；Zotero 批量修正并写入后回读断言 |
+| **每日新文献** | 「把每天的 WOS 提醒接进来，自动分诊」 | 拉 Alert 邮件 → 解析 → 补 DOI/摘要 → 与台账/正文对重 → 出候选简报（只分诊，不入账） |
 | **搭骨架** | 「第 3 章按这个方向搭骨架」 | 章节总纲 → 段落提纲（每段一句论述指向 + 拟引台账编号），你确认后才动笔 |
 | **填血肉** | 「按提纲写 3.2」 | 证据池 → 段稿 → 删引测试 → 【作者 年份】占位替换成 [n] → 本节引用明细表 |
 | **自检交付** | 「核一下 3.2，哪几条撑不住『主流』这个说法」 | 引用覆盖报告、忠实性 A/B/C 证据行、结构体检表、句法病句清单 |
@@ -96,9 +99,10 @@
 | **Zotero 桌面版** | 推荐 | 本地 PDF 全文；体系卷 §7.4 的「两处查找」 | 只能扫 `pdfs/`，本地全文来源少一处 | `--fix --with-zotero` 自动装，或到 [zotero.org/download](https://www.zotero.org/download/) |
 | Zotero Web API key + userID | 可选 | 批量修正 Zotero 条目字段 | Zotero 直写通道不可用 | `python .claude/doctor.py --configure` 交互配置 |
 | AMiner token | 可选 | 中文文献、无 DOI 老文献核验 | AMiner 层不可用；Crossref/arXiv 照常 | `--configure` 交互配置 |
+| **邮箱 IMAP + 客户端授权码** | 可选 | 每日文献 Alert 自动拉信 | 每日监控不可用；其余功能照常 | 见 [§4.8](#48-邮箱-alert--imap-授权码可选)；QQ/Gmail/Outlook 均可 |
 | 大模型 API key | **不需要** | — | — | 模型由你的 Claude Code 账号提供，与本仓库无关 |
 
-**一句话：只有 Python 和网络是硬门槛；Zotero、AMiner、pandoc、curl 都是可选项，不配也能用核心功能。**
+**一句话：只有 Python 和网络是硬门槛；Zotero、AMiner、pandoc、curl、邮箱 IMAP 都是可选项，不配也能用核心功能。**
 
 > `doctor.py` 有两个位置：还在仓库里时用 `python tools/doctor.py`；装完以后用 `python .claude/doctor.py`。**下面所有 `.claude/...` 路径，用户级安装时都换成 `~/.claude/...`**（Windows 是 `$HOME\.claude\...`）。
 
@@ -134,6 +138,8 @@ bash install.sh ~/my_survey --auto-install
 3. 检查 Python / pandoc / curl；带 `-AutoInstall` / `--auto-install` 时，缺什么就尝试用系统包管理器装；
 4. 把体检脚本 `doctor.py` 和密钥说明 `KEY_SETUP.md` 复制到 `<项目>/.claude/`；
 5. 自动跑一次环境体检，把缺的东西列出来。
+
+> 每日文献监控是**可选模块**，安装脚本不会自动建 `daily/`。需要时按 [§4.8](#48-邮箱-alert--imap-授权码可选) 单独初始化；它不改动上面的项目骨架。
 
 > **只想让所有项目都能用？** 不带 `-ProjectRoot` / 项目目录即可，装到 `~/.claude/skills/`。此时骨架建在你**当前所在目录**，所以请先 `cd` 到你的项目目录再运行。
 
@@ -173,7 +179,7 @@ claude
 
 ## 3. 体检报告怎么读
 
-`doctor.py` 的输出分六段：必需项、可选命令行工具、Zotero、外部账号与密钥、网络与接口、安装状态。每行前面有一个标记：
+`doctor.py` 的输出分七段：必需项、可选命令行工具、Zotero、外部账号与密钥、网络与接口、安装状态、每日监控（可选）。每行前面有一个标记：
 
 | 标记 | 含义 | 你要做什么 |
 |---|---|---|
@@ -210,6 +216,7 @@ python3 .claude/doctor.py
 | `[!] pandoc 未安装` | 不能 docx→md | 可选；`python .claude/doctor.py --fix` 自动装 |
 | `[!] arXiv：返回 406` | urllib 被 arXiv 限流 | 装 curl 后 `arxiv_curl.py` 可兜底；`--fix` 自动装 |
 | `[!] Crossref：连接超时` | 网络/代理问题 | 检查代理；公司网络见 §4.7 |
+| `[!] 每日监控配置：这些字段还没填好` | `daily/config.json` 有缺项或占位符 | 按 §4.8 填，再跑 `python check_config.py`；doctor 不显示授权码 |
 
 退出码：`0` = 必需项齐全；`1` = 有必需项不满足；`2` = 用法或配置过程出错。
 
@@ -306,6 +313,94 @@ export HTTPS_PROXY="http://你的代理地址:端口"
 
 doctor 会显示检测到的代理变量，方便排查。
 
+### 4.8 邮箱 Alert + IMAP 授权码（可选）
+
+**用途**：把数据库的**保存检索 / Alert** 接进项目。每天定时拉 Alert 邮件 → 解析题录 → 题名补 DOI 与摘要 → 和台账、正文、历史简报对重 → 生成中文候选简报。**有新文献才出声，没新增就安静**。
+
+它不是台账：简报只回答「这篇值不值得看、以什么角色看、下一步做什么」。要把候选写进正文，仍走「写作卷定强度 → 体系卷取全文入账 → 写作卷落笔」的固定顺序。
+
+**前提**：
+
+- 已在 Web of Science / Scopus / PubMed / 期刊网站建好保存检索或 Alert，邮件能收到；
+- 邮箱支持 IMAP（QQ、Gmail、Outlook 均可），并已生成**客户端授权码**（不是登录密码）。
+
+**第 1 步：初始化工作目录**（在综述项目根目录）
+
+```powershell
+python .claude/skills/survey-ops/scripts/daily/init_daily.py --workdir ./daily
+```
+
+```bash
+python3 .claude/skills/survey-ops/scripts/daily/init_daily.py --workdir ./daily
+```
+
+装了合并包 `survey-manager` 的，把路径里的 `survey-ops` 换成 `survey-manager`。脚本会建 `daily/` 目录、复制拉信/解析/补全/调度脚本、生成 `config.json` 占位与 `CLAUDE.md` 分诊模板、写 `.gitignore`。重复运行只刷新脚本，不覆盖已有配置与分诊口径。
+
+**第 2 步：填 `daily/config.json`**
+
+| 字段 | 填什么 | 说明 |
+|---|---|---|
+| `imap_server` / `imap_port` | IMAP 地址与端口 | QQ：`imap.qq.com:993`；Gmail：`imap.gmail.com:993` |
+| `use_ssl` | `true` | 目前固定走 SSL |
+| `email` | 收信邮箱**完整地址** | 不要只写域名 |
+| `auth_code` | 邮箱**客户端授权码** | 不是登录密码；QQ 在「设置 → 账户 → POP3/IMAP」生成 |
+| `from_filter` | Alert 发件人完整地址 | 如 `alerts-noreply@clarivate.com` |
+| `match_domain` | 发件人域名 | 兜住数据库换发信地址；QQ IMAP 不支持服务端域名检索，脚本在客户端过滤 |
+| `folders` | 扫描的文件夹 | 默认 `["INBOX", "Junk"]`，垃圾箱也扫 |
+| `ledger_path` | 台账路径 | 留空用 `../bib/verified.md`；相对路径以 `daily/` 为基准 |
+| `manuscript_globs` | 正文 glob 列表 | 留空用 `["manuscript/*.md", "docs/*.md"]` |
+
+**第 3 步：检查配置（不会显示授权码）**
+
+```powershell
+cd daily
+python check_config.py
+python check_config.py --test-imap   # 可选：实际登录一次，确认授权码可用
+```
+
+`check_config.py` 只报字段名与格式问题，并检查 `.gitignore` 是否排除了 `config.json`。退出码 `2`＝还没填好，`3`＝IMAP 登录失败（授权码过期、IMAP 未开、网络不通等）。`--test-imap` 会联网，但不会打印授权码。
+
+**第 4 步：改分诊口径**
+
+`daily/CLAUDE.md` 是从模板生成的，**必须按项目改**：综述范围、纳入/排除判据、三类引用角色、五分钟三问、A/B/C/D 类型定义。模板保留了原工作版的硬纪律，不要删：证据上限（邮件 C、摘要 B、全文 A）、`probable` DOI 必须写「待核」、覆盖缺口必须声明、只分诊不入账。
+
+**第 5 步：手动跑一遍**
+
+```powershell
+cd daily
+python pull_mail.py           # 拉信
+python parse_alerts.py        # 解析
+python enrich_crossref.py     # 补 DOI/摘要并对重
+```
+
+**第 6 步：建定时任务**
+
+Windows（每天 09:00）：
+
+```powershell
+schtasks /Create /TN "Survey Daily Brief" /SC DAILY /ST 09:00 `
+  /TR "powershell -ExecutionPolicy Bypass -File D:\my_survey\daily\run_daily.ps1" /F
+```
+
+macOS / Linux：
+
+```cron
+0 9 * * * "/path/to/project/daily/run_daily.sh"
+```
+
+调度脚本只给 Claude 四个工具（Read / Write / Glob / Grep），**不给 Bash、不给联网**；邮件正文即使藏了指令也执行不了命令。空提醒（解析 0 条）会归档后安静退出，不生成空简报。
+
+**安全**：`config.json` 含授权码，等同于邮箱密码。`.gitignore` 已排除它；不要贴进聊天、issue、commit 或报告。授权码在邮箱网页重新生成后旧码立即失效，回来改这里再跑一次 `check_config.py --test-imap`。
+
+**边界与已知限制**：
+
+- 只分诊，不写 `bib/verified.md`、不改正文、不宣称某文「已纳入」；
+- Web of Science 的 Alert 邮件常只展示前 5 条，其余题名可一行一条粘到 `daily/manual/extra_titles.txt`，简报会声明覆盖缺口；
+- `parse_alerts.py` 目前按 WOS 的 `full-record` 邮件模板解析；换 Scopus / PubMed / 期刊 Alert 前先看一封样本邮件，必要时改解析正则，不要盲跑；
+- 核心脚本直接复制自原 `mail_daily` 工作版，逐项来源与改动见 `scripts/daily/SOURCE.md`；真实配置、历史邮件、简报与去重台账未随包分发。
+
+完整说明见 [`skills/survey-ops/references/daily-lit.md`](skills/survey-ops/references/daily-lit.md)。
+
 ---
 
 ## 5. 第一次用：从一个模糊题目开始
@@ -384,6 +479,8 @@ doctor 会显示检测到的代理变量，方便排查。
 | 看全文引用有没有漏 | 「核一下全文的引用覆盖」 | 体系卷：`cite_coverage.py` |
 | 判断引文撑不撑得住 | 「这条引文原文到底怎么说的」 | 写作卷 §4.2 → 体系卷 §7.4 取全文 |
 | 文献库周维护 | 「把这周新增的文献整理入库」 | 体系卷：台账 diff、去重、补字段、编号顺延 |
+| 接每日 Alert | 「把每天的 WOS 提醒接进来，自动分诊」 | 体系卷 §16 + `references/daily-lit.md`；先用 `init_daily.py` 初始化 |
+| 看今天有什么新文献 | 「读一下今天的简报」 | 读 `daily/brief/YYYY-MM-DD.md`；候选入正文仍走取证流程 |
 | 批量修 Zotero | 「Zotero 里会议论文类型错了，批量改」 | 体系卷 §10：写入 + 回读断言 |
 | 调整章节结构 | 「把第 4 章并进第 3 章」 | 写作卷 §9：冲击扫描 → 返工清单 |
 | 让 skill 自己变强 | 「演进 skill」 | 两卷各自的演进通道：病例 → 新条文 |
@@ -456,6 +553,12 @@ python .claude/skills/survey-ops/scripts/faithfulness_check.py 证据表.md -c �
 
 一律走环境变量：脚本不读 `.env` 文件，也不得硬编码 key。填法见 [`KEY_SETUP.md`](KEY_SETUP.md)，或直接跑 `python .claude/doctor.py --configure`。
 
+**唯一例外：每日监控的邮箱授权码。** 它必须放在本机 `daily/config.json`，不能走环境变量（定时任务与手动运行都要读同一份配置）。因此：
+
+- `init_daily.py` 会写 `daily/.gitignore`，把 `config.json`、`inbox/`、`processed/`、`logs/`、`state/` 排除；
+- `check_config.py` 会检查这条排除规则是否存在；
+- 任何时候都不要把 `config.json` 的内容贴进聊天、issue、commit 或报告。提交前看一眼 `git status`，确认它没被 `git add`。
+
 **不要把 key 写进** `CLAUDE.md`、脚本注释、报告、聊天记录、issue、PR、commit message。`.gitignore` 已排除 `.env`、`*.env`、`*.key`、`*.token`，但**不要依赖它**——提交前还是看一眼 `git status`。
 
 ---
@@ -476,14 +579,28 @@ skills/
 │   ├── references/citation_style_notes.md   著录转换规则
 │   └── templates/section_workflow.md        章节五步循环模板
 ├── survey-ops/                          体系卷（机械运转）
-│   ├── SKILL.md                         §6A、§7、§8、§10、§15
+│   ├── SKILL.md                         §6A、§7、§8、§10、§15、§16（每日 Alert）
+│   ├── references/daily-lit.md          每日监控完整说明
+│   ├── templates/
+│   │   ├── daily_config.example.json    config.json 占位模板
+│   │   └── daily_triage.md              分诊口径模板（生成 daily/CLAUDE.md）
 │   └── scripts/
 │       ├── verify_round1.py             存在性核验：Crossref DOI + 书目 + arXiv
 │       ├── aminer_search.py             AMiner 层（需 AMINER_API_KEY）
 │       ├── arxiv_curl.py                arXiv API 的 curl 兜底（urllib 被 406 时）
 │       ├── cite_coverage.py             正文引用覆盖核对（写作卷 §4.1）
 │       ├── faithfulness_check.py        忠实性核对证据行校验（写作卷 §4.2）
-│       └── zotero_client.py             Zotero Web API 直写通道（体系卷 §10）
+│       ├── zotero_client.py             Zotero Web API 直写通道（体系卷 §10）
+│       └── daily/                       每日 Alert 监控
+│           ├── init_daily.py            初始化 daily/ 工作目录
+│           ├── check_config.py          只读配置体检（不显示授权码）
+│           ├── pull_mail.py             IMAP 拉 Alert（UID + Message-ID 去重）
+│           ├── parse_alerts.py          WOS Alert HTML → _parsed.md
+│           ├── enrich_crossref.py       题名→DOI→摘要，并与台账/正文对重
+│           ├── run_daily.ps1 / .sh      每日总调度
+│           ├── check_alert_links.py     只读诊断：邮件里到底有几条
+│           ├── uid_gaps.py              只读诊断：邮箱 UID 空洞
+│           └── SOURCE.md                与原 mail_daily 工作版的逐项对照
 └── _shared/handoff.md                   两卷交接契约
 ```
 
@@ -502,6 +619,7 @@ bib/verified.md  文献台账：只增不改、编号顺延
 docs/            progress.md（安装时建）；claims.md、concepts.md 随写作建立
 reports/         回执与报告
 reports/_raw/    接口原始返回、改动前备份
+daily/           每日 Alert 监控工作目录（可选；config.json 含授权码，禁止提交）
 ```
 
 这三样是它的「记忆」：
@@ -589,6 +707,24 @@ A：能。台账、进度板、概念台账、当前提纲都在项目目录里�
 
 A：能。skill 已经复制到 `<项目>/.claude/skills/`；`doctor.py` 和 `KEY_SETUP.md` 也复制到了 `.claude/`。只有想更新 skill 版本时才需要重新 clone。
 
+### 每日 Alert
+
+**Q：每日简报会不会直接把新文献写进台账或正文？**
+
+A：不会。日报只做分诊，输出的是候选清单，证据上限最多 B 级（邮件本身 C 级）。要写进正文，按「写作卷定强度 → 体系卷取全文、核著录、入台账 → 写作卷落笔」走；跳过取证直接写，等于用 C 级证据撑论断。
+
+**Q：WOS 邮件只展示 5 条，其余文献怎么办？**
+
+A：Web of Science 的 Alert 模板固定只带 5 条，「View all」页面匿名取不到其余记录。两条路：① 点开「View all N records」，把其余题名一行一条粘到 `daily/manual/extra_titles.txt`（约 1 分钟），下一轮会合并并按题名补 DOI；② 把 Alert 改成每日提醒，单批新增通常不超过 5 条。无论哪种，简报都会声明覆盖缺口。
+
+**Q：`check_config.py` 说 `NOT READY`，但字段我都填了？**
+
+A：看它列出的字段名。占位符 `【待填】`、`your-email@example.com` 不算填好；`email` 必须写完整地址；`from_filter` 与 `match_domain` 至少填一个。填完重跑；要确认授权码本身可用，加 `--test-imap`。
+
+**Q：授权码会不会被提交到 git？**
+
+A：`init_daily.py` 会在 `daily/` 下写 `.gitignore` 排除 `config.json`、`inbox/`、`processed/`、`logs/`、`state/`，`check_config.py` 也会检查这条规则。但不要只依赖 `.gitignore`——提交前看一眼 `git status`。授权码等同于邮箱密码，不要贴进聊天、issue 或报告。
+
 ---
 
 ## 11. 病例、演进与依赖
@@ -604,7 +740,8 @@ A：能。skill 已经复制到 `<项目>/.claude/skills/`；`doctor.py` 和 `KE
 - Python 3.8+，仅标准库
 - pandoc（`tools/convert.cmd` 用）、curl（`arxiv_curl.py` 用），都非必需
 - Zotero 桌面版（本地全文，推荐）、Zotero Web API（直写，可选）、AMiner（中文/无 DOI 核验，可选）
-- 网络：Crossref、arXiv（必需）；AMiner、Zotero API（配了才需要）
+- 邮箱 IMAP + 客户端授权码（每日 Alert 监控，可选）；`parse_alerts.py` 目前按 Web of Science 邮件模板解析
+- 网络：Crossref、arXiv（必需）；OpenAlex（每日监控补摘要，可选）、AMiner、Zotero API（配了才需要）
 
 本包是**节点快照**，不跟上游自动同步。需要新条文时，按写作卷 §0 在你自己的项目里长出来，再决定是否回灌本仓库。
 

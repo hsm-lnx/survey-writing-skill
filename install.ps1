@@ -310,5 +310,11 @@ if ($pythonCmd) {
         Write-Host "  随时体检：  $pythonCmd `"$doctorDst`""
     }
     Write-Host "  配置密钥：  $pythonCmd `"$doctorDst`" --configure"
+    if ($ProjectRoot) {
+        Write-Host "  每日监控：  $pythonCmd `"$base\survey-ops\scripts\daily\init_daily.py`" --workdir `"$ProjectRoot\daily`""
+    } else {
+        Write-Host "  每日监控：  $pythonCmd `"$base\survey-ops\scripts\daily\init_daily.py`" --workdir .\daily"
+    }
+    Write-Host "              （可选；初始化后填 daily\config.json，详见 README §4.8）"
 }
 Write-Host ""

@@ -50,7 +50,7 @@ try:
 except Exception:
     pass
 
-VERSION = "1.0"
+VERSION = "1.0.1"
 MIN_PY = (3, 8)
 UA = "survey-writing-doctor/1.0 (environment check)"
 AMINER_URL = "https://searchtest.aminer.cn/aminer-search/search/publicationV2"
@@ -676,6 +676,71 @@ def check_install_state(rep, project_root):
         rep.add("skip", "项目骨架", "当前目录不是已初始化的项目；如果你只想全局用 skill，可忽略")
 
 
+def check_daily_config(rep, project_root):
+    """每日 Alert 监控是可选模块；只检查 config.json 字段，不显示授权码。"""
+    rep.section("7. 每日监控（可选）")
+
+    candidates = []
+    if project_root:
+        candidates.append(Path(project_root) / "daily")
+    candidates.append(Path.cwd() / "daily")
+    daily = next((p for p in candidates if (p / "config.json").is_file()), None)
+
+    if daily is None:
+        rep.add("skip", "每日监控", "未初始化（可选）；需要时按 README §4.8 运行 init_daily.py")
+        return
+
+    cfg_path = daily / "config.json"
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        rep.add("warn", "每日监控配置", "config.json 不是合法 JSON：%s" % exc,
+                fix="按 daily/config.example.json 重填；授权码不要外传")
+        return
+    if not isinstance(cfg, dict):
+        rep.add("warn", "每日监控配置", "config.json 顶层必须是对象 {...}")
+        return
+
+    def blank(value):
+        return not isinstance(value, str) or not value.strip()
+
+    def placeholder(value):
+        text = value.strip().lower()
+        return any(bit in text for bit in ("待填", "your-email", "example.com"))
+
+    problems = []
+    server = cfg.get("imap_server")
+    if blank(server) or "imap" not in server.lower() or placeholder(server):
+        problems.append("imap_server")
+    port = cfg.get("imap_port")
+    if not isinstance(port, int) or not (1 <= port <= 65535):
+        problems.append("imap_port")
+    email = cfg.get("email")
+    if blank(email) or placeholder(email) or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email.strip()):
+        problems.append("email")
+    code = cfg.get("auth_code")
+    if blank(code) or placeholder(code) or len(code.strip()) < 6:
+        problems.append("auth_code")
+    sender = cfg.get("from_filter")
+    domain = cfg.get("match_domain")
+    if (blank(sender) or placeholder(sender)) and (blank(domain) or placeholder(domain)):
+        problems.append("from_filter/match_domain")
+
+    if problems:
+        rep.add("warn", "每日监控配置", "这些字段还没填好：%s" % "、".join(problems),
+                fix="填好后在 daily/ 里运行 python check_config.py --test-imap")
+        return
+
+    rep.add("ok", "每日监控配置", "必填字段齐全（授权码未显示，未做登录测试）")
+
+    gi = daily / ".gitignore"
+    if not gi.is_file() or "config.json" not in gi.read_text(encoding="utf-8", errors="replace"):
+        rep.add("warn", "每日监控排除", "daily/.gitignore 没有排除 config.json",
+                fix="重新运行 init_daily.py，或在 daily/.gitignore 加一行 config.json")
+    else:
+        rep.add("ok", "每日监控排除", "config.json 已在 .gitignore 中")
+
+
 # --------------------------------------------------------------------------
 # 自动安装
 # --------------------------------------------------------------------------
@@ -1091,6 +1156,7 @@ def main(argv=None):
     if not args.offline:
         check_zotero_identity(rep, zuser, zkey)
     check_install_state(rep, args.project_root)
+    check_daily_config(rep, args.project_root)
 
     _LAST_RESULTS = rep.results
 

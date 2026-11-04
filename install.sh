@@ -257,5 +257,11 @@ if [ -n "$PY" ]; then
         echo "  随时体检：  $PY \"$SETUP_DIR/doctor.py\""
     fi
     echo "  配置密钥：  $PY \"$SETUP_DIR/doctor.py\" --configure"
+    if [ -n "$ROOT" ]; then
+        echo "  每日监控：  $PY \"$BASE/survey-ops/scripts/daily/init_daily.py\" --workdir \"$ROOT/daily\""
+    else
+        echo "  每日监控：  $PY \"$BASE/survey-ops/scripts/daily/init_daily.py\" --workdir ./daily"
+    fi
+    echo "              （可选；初始化后填 daily/config.json，详见 README §4.8）"
 fi
 echo
