@@ -1,26 +1,12 @@
 ---
-name: "survey-ops"
-display_name: "综述工程"
-display_name_en: "Survey Operations"
-description: "综述工程的机械运转规范；正文措辞与学术判断属 survey-writing。"
-description_zh: "负责文献核验与全文定位、台账 diff 与编号顺延、Zotero 写入、批量作业和落盘对账。"
-description_en: "Mechanical operations for literature-review projects: reference verification, PDF retrieval, ledger diff and numbering, Zotero writes, batch jobs, and audit trails."
-examples_zh:
-  - "核一下这 120 条文献，哪几条查无出处"
-  - "把这周新下的 20 篇文献整理入库"
-  - "Zotero 里这批会议论文的类型错了，批量改一下"
-examples_en:
-  - "Verify these 120 references and flag the ones with no traceable source."
-  - "Add this week's 20 new papers to the literature ledger."
-  - "Fix the item type for these conference papers in Zotero in bulk."
-version: "1.0.1"
-author: "hsm-lnx"
+name: survey-ops
+description: 综述工程的机械运转规范。跑文献核验与全文定位脚本、取得 PDF、对台账做 diff 与编号顺延、写 Zotero、批量提取搬运投影、落盘备份与对账时使用。学术判断（正文怎么写、论断配多强证据、结构对不对）不在此卷，见 survey-writing。
 ---
 
 # 综述写作规范 · 体系卷（通用快照版）
 
 > 版本：v3.1-clean（2026-11-04 分卷）。本卷管**机械运转**——数据怎么搬、编号怎么排、台账怎么写、脚本怎么跑、文件怎么落盘、对账能不能对上。判据一律是「对账对不对得上」，不是「读起来站不站得住」。
-> 学术判断（正文措辞、论断强度、概念定义、段落结构、忠实性判断）见 **`survey-writing`** 卷；两卷之间的交接物见 `references/handoff.md`。
+> 学术判断（正文措辞、论断强度、概念定义、段落结构、忠实性判断）见 **`survey-writing`** 卷；两卷之间的交接物见 `skills/_shared/handoff.md`。
 > 条文准入同受 `survey-writing` §0 约束：新条须有事故病例，无病例不立条。
 
 ## 部署约定（快照版新增）
@@ -29,8 +15,6 @@ author: "hsm-lnx"
 2. **脚本以本 skill `scripts/` 下的版本为准**。全部走免费接口；每次查询的原始返回逐条落盘 `reports/_raw/` 留痕，判定不落盘不算完成。
 3. **密钥只走环境变量**，见仓库根目录 `KEY_SETUP.md`。任何脚本都不得硬编码 key；缺 key 时脚本直接报错退出，不得降级为「查询无果」。
 4. **首次使用或换机器先体检。** 在项目根目录跑 `python .claude/doctor.py`（`python3` 视系统而定）；缺 Python／pandoc／Zotero 按报告提示处理，配置 AMiner／Zotero 密钥跑 `python .claude/doctor.py --configure`。体检只读，不会改文献库。
-5. **单卷与合并包。** 本卷可单独用于机械运转；需要写作判断时，须与 `survey-writing` 同装，或使用合并包 `survey-manager`（一个 skill 内含两卷，可直接上传单 skill 平台）。
-6. **每日监控是可选模块。** 需要时跑 `python scripts/daily/init_daily.py --workdir <项目>/daily`，再按 `references/daily-lit.md` 配置。日报只分诊、不入账；纳入仍走 §7／§8。
 
 ## 路由：体系任务读哪几节
 
@@ -42,12 +26,11 @@ author: "hsm-lnx"
 | Zotero 写入与收口 | §10 | §7 §8 |
 | 批量作业（提取·搬运·投影） | §6A | §7 §10 |
 | 证据行校验（`faithfulness_check.py`） | 写作卷 §4.2 的口径 + 本卷 `scripts/` | §10 |
-| 每日 Alert 拉信／分诊／出简报 | §16 + `references/daily-lit.md` | 写作卷 §2（要写入正文时才读） |
 | 体系条文演进 | §15 | — |
 
 ## 卷界
 
-**本卷收**：§6A 批量作业纪律、§7 文献核验脚本（含 §7.4 全文取得）、§8 文献变更鉴别、§10 Zotero 直写通道、§15 体系条文的演进、§16 每日文献 Alert 监控。
+**本卷收**：§6A 批量作业纪律、§7 文献核验脚本（含 §7.4 全文取得）、§8 文献变更鉴别、§10 Zotero 直写通道、§15 体系条文的演进。
 **本卷不收**（在 `survey-writing`）：§0–§5、§9、§11、§12／12A／12B、§13、§14。
 **节号沿用分卷前的编号，不重排**——历史记录里的 § 引用按原号读。
 
@@ -62,7 +45,7 @@ author: "hsm-lnx"
 | 批量作业影响正文 | → `survey-writing` §9 | 同上，附对账行 |
 | 收到「跑证据行校验」 | ← `survey-writing` §4.2 | 证据表路径；跑 `scripts/faithfulness_check.py`，只报违规，**不改判** |
 
-细则见 `references/handoff.md`。
+细则见 `skills/_shared/handoff.md`。
 
 ## 6A. 批量作业纪律
 
@@ -163,65 +146,3 @@ curl -s "https://arxiv.org/abs/<arxiv_id>" | grep -oE '<meta name="citation_[^>]
 - **冲突必须改写**，同 §14。
 - **单批超过 5 条先出清单交用户裁决**。
 - 本卷条文只写「对账怎么对」，不写「话怎么说」——后者一律转运。
-
-## 16. 每日文献 Alert 监控（2026-11-04 设立）
-
-管束对象：数据库保存检索／期刊 Alert 的**日常增量**。目标是「有新文献才出声，没新增就安静」，不是把日报当台账。
-
-### 16.1 定位与边界
-
-- 本模块只做**分诊**：拉信、解析、补 DOI/摘要、与台账/正文/历史简报对重、给相关性/优先级/证据上限，输出候选简报。
-- **不写 `bib/verified.md`，不改正文，不宣称某文已纳入。** 纳入仍走 §7／§8 的全文核实与台账流程。
-- 理由：Alert 邮件最多 C 级，补全摘要最多 B 级；让日报直接入账，等于把未经全文核实的条目混进台账。
-
-### 16.2 初始化与配置
-
-1. 在综述项目根目录跑 `python <skill>/scripts/daily/init_daily.py --workdir ./daily`。
-   它建目录、复制脚本、从模板生成 `config.json` 与 `daily/CLAUDE.md`、写 `.gitignore`。
-2. `config.json` 填 IMAP 地址、完整邮箱地址、**客户端授权码**、Alert 发件人与域名；
-   `ledger_path` 与 `manuscript_globs` 可留空，默认到上一级找 `bib/verified.md`、
-   `manuscript/*.md`、`docs/*.md`。
-3. **授权码等同邮箱密码**：只存在本机 `config.json`，`.gitignore` 必须排除；不得贴进聊天、
-   issue、commit。
-4. `daily/CLAUDE.md` 是分诊口径，必须按项目填写综述范围、纳入／排除判据、引用角色。
-   模板按原 `mail_daily/CLAUDE.md` 的结构脱敏，保留输入优先级、核心/组件/邻域三类、
-   硬门槛、五分钟三问、四处去重与空简报纪律；只把项目专属的表号、计数、文件名、
-   截止日换成【待填】。四条硬纪律不得删：证据上限、`probable` DOI 待核、覆盖缺口声明、只分诊不入账。
-
-### 16.3 脚本与调用顺序
-
-| 顺序 | 脚本 | 作用 | 退出码约定 |
-|---|---|---|---|
-| 1 | `scripts/daily/pull_mail.py` | IMAP `UID SEARCH`＋`UID FETCH` 拉 Alert，按 Message-ID 去重，只读不改邮箱状态 | 2 配置/授权码未填；3 取正文失败，邮件留邮箱 |
-| 2 | `scripts/daily/parse_alerts.py` | quoted-printable HTML → `_parsed.md`，保留题名、入藏号、覆盖信息 | 4 本轮 0 条（空提醒） |
-| 3 | `scripts/daily/enrich_crossref.py` | 题名→DOI→著录/摘要；Crossref 缺摘要用 OpenAlex；与台账、正文、历史简报对重 | 2 全部查询失败（断网），退回 `_parsed.md` |
-| 4 | `daily/CLAUDE.md` + `claude -p` | 逐条分诊，写 `brief/YYYY-MM-DD.md` | 非 0 则不归档，邮件留待重试 |
-| 5 | `scripts/daily/run_daily.ps1` / `.sh` | 串起 1–4，处理空提醒与归档 | — |
-
-- 脚本来源：核心脚本直接复制自原 `mail_daily` 工作版，不是替代实现；逐项复制关系与改动见
-  `scripts/daily/SOURCE.md`。`parse_alerts.py` 逐字节相同，其余只改配置路径与解释器定位。
-  真实 `config.json`、历史邮件、简报与去重台账未随包分发。
-- Windows 用任务计划程序调 `run_daily.ps1`；macOS/Linux 用 cron 调 `run_daily.sh`。
-- 自动化调用 Claude 时**只给 Read / Write / Glob / Grep**，不给 Bash、不给联网；改调度脚本时保留此限制。
-- `run_daily.ps1` 必须 UTF-8 带 BOM + CRLF；`init_daily.py` 复制的版本已处理。
-- 诊断只读：`check_alert_links.py [邮件路径]`、`uid_gaps.py --folder INBOX`。
-
-### 16.4 分诊结论与交接
-
-简报每条至少写：题名、DOI（`probable` 写「候选 DOI，待核」）、著录、类型、三问结论、
-证据上限、与本综述的具体关系、建议动作、待核项。
-
-要把候选推进为正式引用，按 `references/handoff.md`：
-
-1. 写作卷先定论断强度（写作卷 §2）；
-2. 体系卷取全文、核著录、入台账、给编号与 A/B/C 等级；
-3. 写作卷按等级与限定词落笔。
-
-跳过第 2 步直接把简报里的文献写进正文，等于用 C 级证据撑论断。
-
-### 16.5 已知坑
-
-- Alert 邮件常只展示前 5 条；其余题名粘到 `manual/extra_titles.txt`，简报必须声明覆盖缺口。
-- `probable`（0.90–0.97）DOI 只能写待核；不得用于断定「已引」。
-- 换数据库（Scopus／PubMed／期刊 Alert）时邮件模板不同，先看样本邮件再改解析正则，不要盲跑。
-- 手机端删信会造成邮箱 UID 空洞；拉信必须走 UID，不能退回序列号。

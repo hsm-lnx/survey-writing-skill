@@ -623,8 +623,6 @@ def _candidate_install_roots(project_root):
 
 def find_install(project_root):
     for base, scope, root in _candidate_install_roots(project_root):
-        if (base / "survey-manager" / "SKILL.md").exists():
-            return base, scope, root
         if (base / "survey-ops" / "SKILL.md").exists() or (base / "survey-writing" / "SKILL.md").exists():
             return base, scope, root
     return None, None, None
@@ -635,44 +633,25 @@ def check_install_state(rep, project_root):
     base, scope, root = find_install(project_root)
 
     if base:
-        bundle = base / "survey-manager"
-        if (bundle / "SKILL.md").exists():
-            missing = []
-            for rel in ("SKILL.md", "references/survey-writing.md", "references/survey-ops.md",
-                        "references/handoff.md", "references/KEY_SETUP.md",
-                        "scripts/verify_round1.py", "scripts/faithfulness_check.py",
-                        "templates/section_workflow.md"):
-                if not (bundle / rel).exists():
-                    missing.append(rel)
-            if missing:
-                rep.add("warn", "skill（合并包）", "已找到 %s（%s），但缺少：%s" % (bundle, scope, "、".join(missing)),
-                        fix="重新复制完整的 survey-manager/ 目录")
-            else:
-                rep.add("ok", "skill（合并包）", "已安装 survey-manager 到 %s（%s）" % (bundle, scope))
+        missing = []
+        for rel in ("survey-writing/SKILL.md", "survey-ops/SKILL.md",
+                    "_shared/handoff.md", "survey-ops/scripts/verify_round1.py",
+                    "survey-ops/scripts/faithfulness_check.py"):
+            if not (base / rel).exists():
+                missing.append(rel)
+        if missing:
+            rep.add("warn", "skill 文件", "已找到 %s（%s），但缺少：%s" % (base, scope, "、".join(missing)),
+                    fix="重新运行 install.ps1 / install.sh 覆盖安装")
         else:
-            missing = []
-            for rel in ("survey-writing/SKILL.md", "survey-ops/SKILL.md",
-                        "survey-writing/references/handoff.md", "survey-ops/references/handoff.md", "survey-ops/scripts/verify_round1.py",
-                        "survey-ops/scripts/faithfulness_check.py"):
-                if not (base / rel).exists():
-                    missing.append(rel)
-            if missing:
-                rep.add("warn", "skill 文件", "已找到 %s（%s），但缺少：%s" % (base, scope, "、".join(missing)),
-                        fix="重新运行 install.ps1 / install.sh 覆盖安装")
-            else:
-                rep.add("ok", "skill", "已安装到 %s（%s）" % (base, scope))
+            rep.add("ok", "skill", "已安装到 %s（%s）" % (base, scope))
     else:
-        repo_clone = Path.cwd() / "survey-manager" / "SKILL.md"
-        if not repo_clone.exists():
-            repo_clone = Path.cwd() / "survey-ops" / "SKILL.md"
-        if not repo_clone.exists():
-            repo_clone = Path.cwd() / "skills" / "survey-ops" / "SKILL.md"
+        repo_clone = Path.cwd() / "skills" / "survey-ops" / "SKILL.md"
         if repo_clone.exists():
-            rep.add("warn", "skill", "当前在技能包目录里，但还没装到项目/用户级",
-                    fix="Windows: powershell -ExecutionPolicy Bypass -File install.ps1 -ProjectRoot <你的项目目录>；macOS/Linux: bash install.sh <你的项目目录>；单 skill 平台直接上传 survey-manager/")
+            rep.add("warn", "skill", "当前在仓库目录里，但还没装到项目/用户级",
+                    fix="Windows: powershell -ExecutionPolicy Bypass -File install.ps1 -ProjectRoot <你的项目目录>；macOS/Linux: bash install.sh <你的项目目录>")
         else:
             rep.add("warn", "skill", "没找到已安装的 skill",
-                    fix="先运行本仓库的 install.ps1 / install.sh，或把 survey-manager/ 复制到 .claude/skills/")
+                    fix="先运行本仓库的 install.ps1 / install.sh")
 
     # 项目骨架
     skeleton_root = root if root else (Path.cwd() if (Path.cwd() / "manuscript").exists() else None)
@@ -692,7 +671,7 @@ def check_install_state(rep, project_root):
             if not progress.exists():
                 bits.append("缺 docs/progress.md")
             rep.add("warn", "项目骨架", "；".join(bits),
-                    fix="在项目根目录建 manuscript/pdfs/bib/docs/reports/reports/_raw，并写入 bib/verified.md 与 docs/progress.md；有安装脚本时也可重跑 install.ps1 / install.sh")
+                    fix="重新运行 install.ps1 / install.sh -ProjectRoot <项目目录>")
     else:
         rep.add("skip", "项目骨架", "当前目录不是已初始化的项目；如果你只想全局用 skill，可忽略")
 
