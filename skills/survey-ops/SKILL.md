@@ -14,6 +14,7 @@ description: 综述工程的机械运转规范。跑文献核验与全文定位�
 1. **病例要在你自己的项目里重建。** 每条条文只给匿名线索。建议落到 `reports/cases/`，每个病例记：触发场景、错在哪、怎么发现的、哪条条文由此长出。
 2. **脚本以本 skill `scripts/` 下的版本为准**。全部走免费接口；每次查询的原始返回逐条落盘 `reports/_raw/` 留痕，判定不落盘不算完成。
 3. **密钥只走环境变量**，见仓库根目录 `KEY_SETUP.md`。任何脚本都不得硬编码 key；缺 key 时脚本直接报错退出，不得降级为「查询无果」。
+4. **首次使用或换机器先体检。** 在项目根目录跑 `python .claude/doctor.py`（`python3` 视系统而定）；缺 Python／pandoc／Zotero 按报告提示处理，配置 AMiner／Zotero 密钥跑 `python .claude/doctor.py --configure`。体检只读，不会改文献库。
 
 ## 路由：体系任务读哪几节
 
