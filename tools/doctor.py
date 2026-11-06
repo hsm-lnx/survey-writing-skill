@@ -50,7 +50,7 @@ try:
 except Exception:
     pass
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 MIN_PY = (3, 8)
 UA = "survey-writing-doctor/1.0 (environment check)"
 AMINER_URL = "https://searchtest.aminer.cn/aminer-search/search/publicationV2"
