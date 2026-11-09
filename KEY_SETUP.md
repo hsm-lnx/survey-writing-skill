@@ -1,6 +1,6 @@
 # 密钥接入明细
 
-本包**不含任何密钥**；包内脚本也不调用大模型 API，因此**本包不需要配模型 key**——你运行 skill 所用的 agent（如 Claude Code）用你自己的登录／密钥，与本仓库无关。本包需要你自备的只有两个**可选**的外部文献服务凭证。
+本包**不含任何密钥**；包内脚本也不调用大模型 API，因此**本包不需要配模型 key**——你运行 skill 所用的 agent（如 Claude Code）用你自己的登录／密钥，与本仓库无关。本包需要你自备的只有两个**可选**的外部文献服务凭证；另有三个可选检索配置（OpenAlex 额度与礼貌池），不配也能匿名跑。
 
 这里只讲四件事：要哪些、怎么申请、怎么接进来且不泄露、出问题怎么查。
 
@@ -109,7 +109,29 @@ python .claude/skills/survey-ops/scripts/zotero_client.py smoke
 
 ---
 
-## 3. 大模型 API Key —— 本包不需要
+## 3. `OPENALEX_API_KEY` / `OPENALEX_MAILTO` / `CROSSREF_MAILTO` — 查全复核（可选）
+
+**用途**：`skills/survey-ops/scripts/search/` 下的前向被引、算法名扩展与检索界实测（体系卷 §7.5）。三者都**不是必配项**：
+
+| 变量 | 作用 | 不给会怎样 |
+|---|---|---|
+| `OPENALEX_API_KEY` | 提高 OpenAlex 额度 | 匿名可用；大批量深翻时更容易 429，脚本退避后如实失败，不伪造返回 |
+| `OPENALEX_MAILTO` | 进 OpenAlex 礼貌池 | 仍可请求，优先级较低 |
+| `CROSSREF_MAILTO` | 进 Crossref 礼貌池 | 同上 |
+
+**怎么拿**：OpenAlex key 到 [openalex.org](https://openalex.org/) 注册后，在账号设置里生成；两个 `MAILTO` 填你自己的联系邮箱即可，不需要申请。三者都只写进本机环境变量，**不要**写进仓库、报告或 commit。
+
+```powershell
+$env:OPENALEX_API_KEY = "你的值"
+$env:OPENALEX_MAILTO = "you@example.com"
+$env:CROSSREF_MAILTO = "you@example.com"
+```
+
+`doctor.py --configure` 目前只引导 AMiner 与 Zotero；这三项按上面的手工方式设置即可。
+
+---
+
+## 4. 大模型 API Key —— 本包不需要
 
 这些脚本全走免费文献接口，**不调用任何 LLM API**。skill 本身是给 Claude Code 读的规则文件，模型由你的 Claude Code 客户端负责（登录态或客户端侧的 `ANTHROPIC_API_KEY`），与这个仓库无关。
 
@@ -124,7 +146,7 @@ key = os.environ["MY_LLM_API_KEY"]     # 缺失即报错，不给默认值
 
 ---
 
-## 4. 手工设置环境变量
+## 5. 手工设置环境变量
 
 ### Windows（PowerShell）
 
@@ -174,7 +196,7 @@ export ZOTERO_API_KEY="你的值"
 
 ---
 
-## 5. 出问题怎么查
+## 6. 出问题怎么查
 
 先跑：
 
@@ -199,7 +221,7 @@ python .claude/doctor.py
 
 ---
 
-## 6. 防泄露纪律
+## 7. 防泄露纪律
 
 1. `.gitignore` 已排除 `.env`、`*.env`、`*.key`、`*.token`，但**不要依赖它**——先确认再加文件。
 2. **提交前必做**：

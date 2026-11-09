@@ -50,7 +50,7 @@ try:
 except Exception:
     pass
 
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 MIN_PY = (3, 8)
 UA = "survey-writing-doctor/1.0 (environment check)"
 AMINER_URL = "https://searchtest.aminer.cn/aminer-search/search/publicationV2"
@@ -479,6 +479,13 @@ def check_env_vars(rep):
             rep.add("skip", "ZOTERO_USER_ID",
                     "未设置 —— 配置 Zotero API key 后可自动推导",
                     fix=rep.self_cmd("--configure"))
+
+    oa, oa_src = get_env("OPENALEX_API_KEY")
+    if oa:
+        rep.add("ok", "OPENALEX_API_KEY", "已设置（长度 %d，来源：%s）" % (len(oa), oa_src))
+    else:
+        rep.add("info", "OPENALEX_API_KEY",
+                "未设置 —— 查全复核按匿名请求可用，大批量深翻更易限流")
     return aminer, zuser, zkey
 
 
@@ -505,6 +512,21 @@ def check_network(rep, aminer, zkey, offline=False):
     except Exception as e:
         rep.add("warn", "Crossref", short_err(e),
                 fix="检查网络/代理后重试；离线时不能做文献核验")
+
+    # OpenAlex（查全复核：摘要检索与前向被引）
+    try:
+        params = "works?per-page=1&select=id"
+        oa_key, _ = get_env("OPENALEX_API_KEY")
+        if oa_key:
+            params += "&api_key=" + oa_key
+        status, body = http_get("https://api.openalex.org/" + params, timeout=10)
+        if status == 200:
+            rep.add("ok", "OpenAlex", "可达（摘要检索、前向被引、查全复核）")
+        else:
+            rep.add("warn", "OpenAlex", "返回 HTTP %s；查全复核可能失败" % status)
+    except Exception as e:
+        rep.add("warn", "OpenAlex", short_err(e),
+                fix="查全复核为可选功能；检查网络/代理后重试")
 
     # arXiv
     try:

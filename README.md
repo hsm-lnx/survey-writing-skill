@@ -1,5 +1,7 @@
 # survey-writing / survey-ops：中文综述写作助手
 
+> **版本 1.0.4（2026-11-09）**：新增**引文检索与查全复核**能力——检索方向从「主检索＋复核检索＋后向引文」扩到**前向被引**，数据库范围补上 OpenAlex `cites:`、算法名扩展检索、整池筛查与 Crossref 检索界实测。新增体系卷 §7.5、`references/search-completeness.md` 与 `scripts/search/` 七个脚本；只增加可选能力，默认流程与安装方式不变。见 [§4.9](#49-引文检索与查全复核可选)。
+>
 > **版本 1.0.3（2026-11-08）**：两卷 skill 对齐源 skill 最新版——写作卷 v3.6（v3.5 补 §1 首创自称禁令、§5 同一论断只在一处完整承担、§11.10 指代用属性、§12.5 边界义务适用前提、§12A H6 推论逐跳、§13 E9 语域失配；v3.6 把 §14 工序全文移入 `references/14_mechanism.md`），体系卷 v3.3（§8.5 撤稿空置／改派登记、§8.8 Zotero 入库验收六步、§15 演进游标改指纹＋条数）。只更新条文与一份工序参考文件，安装方式不变。
 >
 > **版本 1.0.2（2026-11-05）**：两卷 skill 对齐源 skill 最新版——写作卷 v3.4（§11 概念台账与首现纪律补强、§11.9 分类双闸门、§13 E8 标签化列举惯性、§14 案例聚合与整体回顾），体系卷 v3.2（§15 同步聚合与整体回顾）。只更新条文，安装方式与目录结构不变。
@@ -16,7 +18,7 @@
 
 **第一次用？** 按 §2 安装 → §3 看体检报告 → §5 走一遍「从模糊题目到章节骨架」。已经装好了，直接看 §6。
 
-**目录：** [它能做什么](#0-它到底能帮你做什么) · [怎么产出](#1-一条综述是怎么产出的) · [安装](#2-五分钟上手) · [体检](#3-体检报告怎么读) · [外部工具](#4-外部工具逐个说明) · [每日监控](#48-邮箱-alert--imap-授权码可选) · [第一次用](#5-第一次用从一个模糊题目开始) · [日常用法](#6-日常怎么用按任务查) · [质量闸门](#7-它拦什么质量闸门) · [FAQ](#10-常见问题faq)
+**目录：** [它能做什么](#0-它到底能帮你做什么) · [怎么产出](#1-一条综述是怎么产出的) · [安装](#2-五分钟上手) · [体检](#3-体检报告怎么读) · [外部工具](#4-外部工具逐个说明) · [每日监控](#48-邮箱-alert--imap-授权码可选) · [查全复核](#49-引文检索与查全复核可选) · [第一次用](#5-第一次用从一个模糊题目开始) · [日常用法](#6-日常怎么用按任务查) · [质量闸门](#7-它拦什么质量闸门) · [FAQ](#10-常见问题faq)
 
 ---
 
@@ -26,6 +28,7 @@
 |---|---|---|
 | **立题与范围** | 「我想写一篇 XX 的中文综述，范围还没想好」 | 用几个问题收敛读者、篇幅、时间窗、边界；给出章节总纲供你确认 |
 | **建文献库** | 「按第 3 章的提纲把文献收进来」 | 逐条检索 Crossref／arXiv／AMiner，核验后写入 `bib/verified.md`，编号顺延；查不到的标 [待验证]，不编造 |
+| **查全复核** | 「这批文献够不够，有没有漏」「为什么检索界划在这」 | 前向被引、算法名扩展、整池筛查、Crossref 边界实测；给出「池内完整性／检索界写实／残留缺口」三句结论，只分诊不入账 |
 | **日常管理** | 「这周新下的 20 篇入库」「Zotero 里会议论文类型错了，批量改」 | 台账去重、补字段、编号对账、变更 diff；Zotero 批量修正并写入后回读断言 |
 | **每日新文献** | 「把每天的 WOS 提醒接进来，自动分诊」 | 拉 Alert 邮件 → 解析 → 补 DOI/摘要 → 与台账/正文对重 → 出候选简报（只分诊，不入账） |
 | **搭骨架** | 「第 3 章按这个方向搭骨架」 | 章节总纲 → 段落提纲（每段一句论述指向 + 拟引台账编号），你确认后才动笔 |
@@ -38,6 +41,7 @@
 - **不是「一句话出整篇」的黑箱。** 章节总纲、段落提纲、结构改动、强论断，这几处都会停下来等你确认。
 - **不是只改措辞的润色器。** 句法规则只是最外层，里面还有文献库、论断强度、忠实性核对和结构审查。
 - **不会编文献。** 查不到就是查不到，标 [待验证]，绝不伪造 DOI、卷号、页码。
+- **不会声称「已穷尽检索」。** 每个通道实际是浅层捕获还是全量布尔集，会按实测写清；无摘要条目只写「未判」，不写成「无关」。
 - **不会偷偷改你的正文。** 体系卷不碰正文；写作卷改动前先备份到 `reports/_raw/`。
 
 ### 和直接把稿子丢给 AI 写，有什么不同
@@ -83,6 +87,8 @@
 
 一句话判据：**「读起来站不站得住」→ 写作卷；「对账对不对得上」→ 体系卷。** 两卷怎么交接写在 `skills/_shared/handoff.md`。
 
+第 ③ 步建库之后还有一道**可选的查全复核**（体系卷 §7.5）：用前向被引、算法名扩展、整池筛查和检索界实测，回答「这批文献为什么够了」。它不改变上面的主线，只在定稿前给检索界做一次对账。
+
 你不需要记住这个分工。说人话，规范会自己分流；判不准时它会反问你。
 
 ---
@@ -98,6 +104,7 @@
 | **Claude Code**（或能读 skill 的 agent） | **必须** | 运行 skill 的宿主 | 用不了 | 你已经在用 Claude Code 的话不用管 |
 | **Python 3.8+** | **必须** | 跑核验、引用覆盖、证据校验脚本 | 脚本跑不了；写作条文仍可读 | 安装脚本可自动装，或到 [python.org](https://www.python.org/downloads/) |
 | **网络：Crossref + arXiv** | **必须** | 文献存在性核验 | 无法核验文献，只能手工查 | 能正常打开网页即可；公司代理见 §4.7 |
+| 网络：OpenAlex | 可选 | 摘要检索、前向被引（`cites:`）、查全复核 | 查全复核不可用；Crossref/arXiv 主流程照常 | 公开 API，能联网即可；大批量深翻建议配 `OPENALEX_API_KEY`，见 [§4.9](#49-引文检索与查全复核可选) |
 | pandoc | 可选 | docx → markdown 转换 | `tools/convert.cmd` 不可用 | `python .claude/doctor.py --fix` 自动装 |
 | curl | 可选 | arXiv 406 时的兜底通道 | 极少数 arXiv 查询失败 | `--fix` 自动装；Win10+ / macOS 通常自带 |
 | **Zotero 桌面版** | 推荐 | 本地 PDF 全文；体系卷 §7.4 的「两处查找」 | 只能扫 `pdfs/`，本地全文来源少一处 | `--fix --with-zotero` 自动装，或到 [zotero.org/download](https://www.zotero.org/download/) |
@@ -491,6 +498,69 @@ skill 会先由写作卷判断这句话要多强的证据，再由体系卷取�
 
 完整说明见 [`skills/survey-ops/references/daily-lit.md`](skills/survey-ops/references/daily-lit.md)。
 
+### 4.9 引文检索与查全复核（可选）
+
+这一节回答的不是「怎么再补几篇文献」，而是 **「这批文献为什么够了」**。默认写作流程不必跑；但案例集／证据集定稿前、审稿人问「有没有漏」时、或换了数据库与时间窗之后，需要把检索界说清楚。
+
+**四个检索方向，补的是四种不同的漏**
+
+| 方向 | 接口／来源 | 检索字段 | 能补什么 | 已知边界 |
+|---|---|---|---|---|
+| **主检索** | Crossref `query.bibliographic` | 题名／作者／容器等著录字段 | 著录权威、期刊覆盖 | 相关度排序下的**浅层捕获**；**不支持摘要检索** |
+| **主检索** | OpenAlex `title_and_abstract.search` | 题名＋摘要 | 摘要侧查漏 | 匿名限流紧；有 key 更稳 |
+| **主检索** | AMiner `publicationV2` | 题名／作者 | 中文文献、无 DOI 老文献 | 相似度 ≥ 0.85 才算命中 |
+| **复核检索** | Web of Science 平台 | 平台检索式 | 库覆盖缺口、完备性检验 | 手工导出，不是 API |
+| **后向引文** | 种子文献的参考文献表 | 参考文献条目 | 更早的研究 | 种子选窄了就滚不出去 |
+| **前向被引** | OpenAlex `cites:` | 引用某个种子 DOI 的全部记录 | 只写算法名、不写主题词的研究 | 种子必须有 DOI；新研究有引用滞后 |
+
+关键区分：**引文追溯补的是主题词表述缺口，WoS 复核补的是库覆盖缺口**，两者不是同一件事，报告里不得混写。
+
+**五条命令**
+
+```bash
+# 1. 前向被引：从正文参考文献编号取种子，抓引用它们的记录
+python skills/survey-ops/scripts/search/citation_chase.py \
+  --manuscript manuscript/正文.md --targets 9,25,44
+
+# 2. 去重 + 主题词初筛 + 与台账/正文差集
+python skills/survey-ops/scripts/search/citation_screen.py \
+  --raw reports/_raw/citation_chase.json
+
+# 3. 补摘要并标信号（无摘要的单列，不得算作「已排除」）
+python skills/survey-ops/scripts/search/citation_abstracts.py \
+  --candidates reports/_raw/citation_chase_screen.json
+
+# 4. 算法名扩展：补「只写 Q-learning / DQN / PPO 等算法名」的漏检
+python skills/survey-ops/scripts/search/algo_name_search.py \
+  --ledger bib/verified.md --manuscript manuscript/正文.md
+
+# 5. 整池筛查：池内每条过信号词，输出 known / out / blind
+python skills/survey-ops/scripts/search/pool_screen.py \
+  --pool reports/_raw/pool.json --ledger bib/verified.md
+```
+
+**检索界实测**（回答「类型过滤和早停到底漏了什么」）：
+
+```bash
+python skills/survey-ops/scripts/search/retrieval_boundary.py types \
+  --manuscript manuscript/正文.md --targets 9,25,44
+python skills/survey-ops/scripts/search/retrieval_boundary.py depth \
+  --query 'welding "reinforcement learning"' --pages 30
+python skills/survey-ops/scripts/search/retrieval_boundary.py type-free --query '...'
+python skills/survey-ops/scripts/search/retrieval_boundary.py non-journal --query '...'
+```
+
+**四条纪律**（比命令重要）：
+
+1. **整池判定前先能复现池**：用原漏斗脚本重建存活池并逐项对账，数字对不上就停，不得拿来源不明的池下结论。
+2. **无摘要只能记「未判」**：不能记成「已排除」；报告必须声明覆盖缺口。
+3. **Crossref 的页数上限是浅层捕获**：相关度排序下取前 N 页，不等于 2015–2026 全量布尔命中；写检索界时按实际写法表述。
+4. **禁用「已穷尽检索」「无遗漏」**：结论按「池内完整性／检索界写实／残留缺口」三句写；「检索手段充分」必须带边界。
+
+**OpenAlex 凭证（可选）**：匿名可用，但限流更紧。大批量深翻时设 `OPENALEX_API_KEY`；再设 `OPENALEX_MAILTO` / `CROSSREF_MAILTO` 可进礼貌池。三者都走环境变量，脚本不读 `.env`、不硬编码。脚本与逐项说明见 [`skills/survey-ops/scripts/search/README.md`](skills/survey-ops/scripts/search/README.md)，条文见 [`skills/survey-ops/references/search-completeness.md`](skills/survey-ops/references/search-completeness.md)。
+
+> 这组脚本只做检索、去重、初筛与落盘，**不作准入判定**。是否纳入案例集／证据集，仍由你按项目判据裁决；脚本输出的「池外候选」不是「应纳入」。
+
 ---
 
 ## 5. 第一次用：从一个模糊题目开始
@@ -567,6 +637,7 @@ skill 会先由写作卷判断这句话要多强的证据，再由体系卷取�
 | 补一篇文献并写进正文 | 「补一篇关于 XX 的文献，写进 4.2」 | 写作卷定强度 → 体系卷取证 → 写作卷落笔（顺序不可倒） |
 | 改一段、润色 | 「把 3.2 第二段改清楚一点」 | 写作卷：先指问题，再给修改稿 |
 | 看全文引用有没有漏 | 「核一下全文的引用覆盖」 | 体系卷：`cite_coverage.py` |
+| 判断检索够不够、有没有漏 | 「这批文献为什么够了」「有没有漏掉的研究」 | 体系卷 §7.5：前向被引 → 算法名扩展 → 整池筛查 → 边界实测；只分诊不入账 |
 | 判断引文撑不撑得住 | 「这条引文原文到底怎么说的」 | 写作卷 §4.2 → 体系卷 §7.4 取全文 |
 | 文献库周维护 | 「把这周新增的文献整理入库」 | 体系卷：台账 diff、去重、补字段、编号顺延 |
 | 接每日 Alert | 「把每天的 WOS 提醒接进来，自动分诊」 | 体系卷 §16 + `references/daily-lit.md`；先用 `init_daily.py` 初始化 |
@@ -596,6 +667,7 @@ skill 会先由写作卷判断这句话要多强的证据，再由体系卷取�
 | **论断强度** | 每次配引文 | 「这方法已成主流」属中／强论断，要 2 至 3 篇支撑；只挂一篇就要求改措辞 |
 | **忠实性核对 A/B/C** | 引文要撑中／强论断时 | 只有摘要算 B 级，不得撑强论断；B 级必须先取全文、摘出关键句才能升 A |
 | **引用覆盖** | 参考文献表定稿后 | 正文漏引、区间引用被误判成漏引；阴性结论必须回读原句才能写 |
+| **检索充分性** | 案例集／证据集定稿前 | 池能否复现、前向被引与算法名扩展有没有补到池外、检索界是否被写成「穷尽」；无摘要只能记「未判」，禁用「无遗漏」 |
 | **概念纪律** | 概念首次出现、改名、精化 | 同义漂移、首现不定义、定义提前透支后文内容 |
 | **段落结构** | 每段写完、结构改动后 | 中心句空转、结论超出前文、例子淹没判断、强主张没有边界 |
 | **句法可读性** | 随结构体检同步 | 伪主语、名词化堆叠、逻辑算子叠用、冗余复述、该有的主语或动作缺失 |
@@ -641,6 +713,8 @@ python .claude/skills/survey-ops/scripts/faithfulness_check.py 证据表.md -c �
 | `AMINER_API_KEY` | 跑 `aminer_search.py`（中文文献、无 DOI 老文献） | 该脚本报错退出；Crossref / arXiv 两层照常可用 |
 | `ZOTERO_USER_ID` + `ZOTERO_API_KEY` | 跑 `zotero_client.py`（Zotero 直写通道） | 该脚本报错退出；skill 其余部分不受影响 |
 
+另有三个**可选配置**：`OPENALEX_API_KEY`（提高额度）、`OPENALEX_MAILTO` / `CROSSREF_MAILTO`（进礼貌池）。都不给时按匿名方式请求，查全复核仍可跑，只是大批量深翻容易被限流；不得为绕限流伪造返回。
+
 一律走环境变量：脚本不读 `.env` 文件，也不得硬编码 key。填法见 [`KEY_SETUP.md`](KEY_SETUP.md)，或直接跑 `python .claude/doctor.py --configure`。
 
 **唯一例外：每日监控的邮箱授权码。** 它必须放在本机 `daily/config.json`，不能走环境变量（定时任务与手动运行都要读同一份配置）。因此：
@@ -671,8 +745,10 @@ skills/
 │   │   └── 14_mechanism.md              §14 条文演进工序全文
 │   └── templates/section_workflow.md        章节五步循环模板
 ├── survey-ops/                          体系卷（机械运转）
-│   ├── SKILL.md                         §6A、§7、§8、§10、§15、§16（每日 Alert）
-│   ├── references/daily-lit.md          每日监控完整说明
+│   ├── SKILL.md                         §6A、§7（含 §7.5 查全复核）、§8、§10、§15、§16（每日 Alert）
+│   ├── references/
+│   │   ├── daily-lit.md                 每日监控完整说明
+│   │   └── search-completeness.md       检索界复核与补漏（§7.5 细则）
 │   ├── templates/
 │   │   ├── daily_config.example.json    config.json 占位模板
 │   │   └── daily_triage.md              分诊口径模板（生成 daily/CLAUDE.md）
@@ -683,6 +759,15 @@ skills/
 │       ├── cite_coverage.py             正文引用覆盖核对（写作卷 §4.1）
 │       ├── faithfulness_check.py        忠实性核对证据行校验（写作卷 §4.2）
 │       ├── zotero_client.py             Zotero Web API 直写通道（体系卷 §10）
+│       ├── search/                      查全复核（体系卷 §7.5）
+│       │   ├── search_common.py         共享：DOI/题名归一、OpenAlex/Crossref 请求、摘要还原
+│       │   ├── citation_chase.py        前向被引：种子 DOI → OpenAlex cites:
+│       │   ├── citation_screen.py       去重 + 主题词初筛 + 与台账/正文差集
+│       │   ├── citation_abstracts.py    补摘要 + 信号词初判（无摘要单列未判）
+│       │   ├── algo_name_search.py      算法名/同义表述扩展检索
+│       │   ├── pool_screen.py           整池筛查：known / out / blind 三层
+│       │   ├── retrieval_boundary.py    Crossref 类型、深度、非期刊边界实测
+│       │   └── README.md                数据库范围、命令与落盘纪律
 │       └── daily/                       每日 Alert 监控
 │           ├── init_daily.py            初始化 daily/ 工作目录
 │           ├── check_config.py          只读配置体检（不显示授权码）
@@ -833,7 +918,7 @@ A：`init_daily.py` 会在 `daily/` 下写 `.gitignore` 排除 `config.json`、`
 - pandoc（`tools/convert.cmd` 用）、curl（`arxiv_curl.py` 用），都非必需
 - Zotero 桌面版（本地全文，推荐）、Zotero Web API（直写，可选）、AMiner（中文/无 DOI 核验，可选）
 - 邮箱 IMAP + 客户端授权码（每日 Alert 监控，可选）；`parse_alerts.py` 目前按 Web of Science 邮件模板解析
-- 网络：Crossref、arXiv（必需）；OpenAlex（每日监控补摘要，可选）、AMiner、Zotero API（配了才需要）
+- 网络：Crossref、arXiv（必需）；OpenAlex（摘要检索、前向被引、查全复核，可选）、AMiner、Zotero API（配了才需要）
 
 本包是**节点快照**，不跟上游自动同步。需要新条文时，按写作卷 §0 在你自己的项目里长出来，再决定是否回灌本仓库。
 
