@@ -7,23 +7,29 @@
       powershell -ExecutionPolicy Bypass -File install.ps1 -ProjectRoot D:\my_survey
       powershell -ExecutionPolicy Bypass -File install.ps1 -ProjectRoot D:\my_survey -AutoInstall
       powershell -ExecutionPolicy Bypass -File install.ps1 -SkipSkeleton
+      powershell -ExecutionPolicy Bypass -File install.ps1 -ProjectRoot D:\my_survey -MultiAgent
 
     参数:
       -ProjectRoot   项目目录；不给则装到 ~/.claude/skills（所有项目可用）
       -SkipSkeleton  不建 manuscript/pdfs 等项目目录
       -AutoInstall   缺 Python / pandoc / curl 时，尝试用 winget / choco / scoop 自动安装
       -NoDoctor      装完不自动跑环境体检
+      -MultiAgent    额外安装多智能体协作模式（.trae 规则、docs/task_cards、mas_gate.py）。
+                     必须装到项目级：给了 -ProjectRoot 就装到那里，否则装到当前目录。
+                     已存在的文件不覆盖。配置步骤见 multiagent/README.md
 #>
 param(
     [string]$ProjectRoot = "",
     [switch]$SkipSkeleton,
     [switch]$AutoInstall,
-    [switch]$NoDoctor
+    [switch]$NoDoctor,
+    [switch]$MultiAgent
 )
 
 $ErrorActionPreference = "Stop"
 $here = $PSScriptRoot
 if (-not $here) { $here = (Get-Location).Path }
+$masInstalled = $false
 
 function Write-Step($text) {
     Write-Host ""
@@ -32,6 +38,19 @@ function Write-Step($text) {
 function Write-Ok($text) { Write-Host "  [ok] $text" -ForegroundColor Green }
 function Write-Warn($text) { Write-Host "  [!] $text" -ForegroundColor Yellow }
 function Write-Fail($text) { Write-Host "  [X] $text" -ForegroundColor Red }
+
+function Install-MasFile([string]$srcFile, [string]$dstFile) {
+    $dstDir = Split-Path $dstFile -Parent
+    if (-not (Test-Path $dstDir)) {
+        New-Item -ItemType Directory -Force -Path $dstDir | Out-Null
+    }
+    if (Test-Path $dstFile) {
+        Write-Host "  [存在] $dstFile（不覆盖）"
+        return
+    }
+    Copy-Item $srcFile $dstFile -Force
+    Write-Host "  [新建] $dstFile"
+}
 
 function Test-RealPython([string]$cmd) {
     if (-not $cmd) { return $false }
@@ -216,6 +235,50 @@ if (-not $SkipSkeleton) {
     }
 }
 
+# ---------- 2.5 多智能体协作模式（可选） ----------
+if ($MultiAgent) {
+    Write-Step "多智能体协作模式 -> 项目级"
+    $masSrc = Join-Path $here "multiagent"
+    if (-not (Test-Path $masSrc)) {
+        Write-Fail "找不到 multiagent\ —— 请确认安装包完整"
+    } else {
+        if ($ProjectRoot) {
+            $masRoot = $ProjectRoot
+        } else {
+            $masRoot = (Get-Location).Path
+            Write-Warn "未给 -ProjectRoot，按当前目录安装：$masRoot"
+        }
+        if ([IO.Path]::GetFullPath($masRoot).TrimEnd("\") -eq [IO.Path]::GetFullPath($here).TrimEnd("\")) {
+            Write-Warn "当前目录是本仓库自身，不在这里安装多智能体文件。"
+            Write-Host "           到你的项目目录里跑：install.ps1 -ProjectRoot <项目目录> -MultiAgent" -ForegroundColor Yellow
+        } else {
+        Write-Host "  规则与任务卡会写进这个项目；.trae\rules 只在项目级生效。"
+
+        Install-MasFile (Join-Path $masSrc "rules\mas-trigger.md") `
+                        (Join-Path $masRoot ".trae\rules\mas-trigger.md")
+
+        $cards = @("多智能体写作体系.md", "mas_agent_prompts.md", "mas_rulecards.md",
+                   "mas_pending.md", "mas_selftest.md")
+        foreach ($c in $cards) {
+            Install-MasFile (Join-Path $masSrc "task_cards\$c") `
+                            (Join-Path $masRoot "docs\task_cards\$c")
+        }
+
+        Install-MasFile (Join-Path $masSrc "scripts\mas_gate.py") `
+                        (Join-Path $masRoot "scripts\mas_gate.py")
+
+        Install-MasFile (Join-Path $masSrc "CLAUDE.snippet.md") `
+                        (Join-Path $masRoot "CLAUDE.multiagent.snippet.md")
+
+        Write-Host "  下一步："
+        Write-Host "    1) 把 CLAUDE.multiagent.snippet.md 并入项目 CLAUDE.md（只追加）"
+        Write-Host "    2) 按 multiagent\README.md §3 在 Trae 建四个自定义智能体"
+        Write-Host "    3) 按 docs\task_cards\mas_selftest.md 验收"
+        $masInstalled = $true
+        }
+    }
+}
+
 # ---------- 3. 依赖检查与自动安装 ----------
 Write-Step "依赖检查"
 
@@ -301,6 +364,9 @@ Write-Step "完成"
 Write-Host "  写作卷条文：$base\survey-writing\SKILL.md"
 Write-Host "  体系卷条文：$base\survey-ops\SKILL.md"
 Write-Host "  交接契约：  $base\_shared\handoff.md"
+if ($masInstalled) {
+    Write-Host "  多智能体： docs\task_cards\（配置见 multiagent\README.md）"
+}
 Write-Host "  使用说明：  仓库根目录 README.md"
 if ($pythonCmd) {
     Write-Host ""

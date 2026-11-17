@@ -6,6 +6,7 @@
 #   bash install.sh ~/my_survey               # 装到项目级，并建项目骨架
 #   bash install.sh ~/my_survey --auto-install  # 缺 Python/pandoc/curl 时尝试自动安装
 #   bash install.sh ~/my_survey --no-doctor     # 装完不跑环境体检
+#   bash install.sh ~/my_survey --multi-agent   # 额外安装多智能体协作模式（项目级）
 #
 set -euo pipefail
 
@@ -14,6 +15,7 @@ ROOT=""
 AUTO_INSTALL=0
 NO_DOCTOR=0
 SKIP_SKELETON=0
+MULTI_AGENT=0
 
 usage() {
     sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
@@ -24,6 +26,7 @@ for arg in "$@"; do
         --auto-install) AUTO_INSTALL=1 ;;
         --no-doctor)    NO_DOCTOR=1 ;;
         --skip-skeleton) SKIP_SKELETON=1 ;;
+        --multi-agent)  MULTI_AGENT=1 ;;
         -h|--help)      usage; exit 0 ;;
         -*)             echo "未知选项：$arg" >&2; exit 1 ;;
         *)              ROOT="$arg" ;;
@@ -113,6 +116,50 @@ EOF
 |---|---|---|---|
 EOF
         echo "  [新建] docs/progress.md"
+    fi
+    echo
+fi
+
+# ---- 多智能体协作模式（可选，项目级） ----
+install_mas_file() {
+    local src="$1" dst="$2"
+    mkdir -p "$(dirname "$dst")"
+    if [ -e "$dst" ]; then
+        echo "  [存在] $dst（不覆盖）"
+    else
+        cp "$src" "$dst"
+        echo "  [新建] $dst"
+    fi
+}
+
+if [ "$MULTI_AGENT" = "1" ]; then
+    echo "多智能体协作模式 -> 项目级"
+    MAS_SRC="$HERE/multiagent"
+    if [ ! -d "$MAS_SRC" ]; then
+        echo "  [X] 找不到 multiagent/ —— 请确认安装包完整" >&2
+    else
+        if [ -n "$ROOT" ]; then
+            MAS_ROOT="$ROOT"
+        else
+            MAS_ROOT="$(pwd)"
+            echo "  [!] 未给项目目录，按当前目录安装：$MAS_ROOT"
+        fi
+        if [ "$(cd "$MAS_ROOT" && pwd -P)" = "$HERE" ]; then
+            echo "  [!] 当前目录是本仓库自身，不在这里安装多智能体文件。"
+            echo "      到你的项目目录里跑：bash install.sh <项目目录> --multi-agent"
+        else
+            echo "  规则与任务卡会写进这个项目；.trae/rules 只在项目级生效。"
+            install_mas_file "$MAS_SRC/rules/mas-trigger.md" "$MAS_ROOT/.trae/rules/mas-trigger.md"
+            for c in 多智能体写作体系.md mas_agent_prompts.md mas_rulecards.md mas_pending.md mas_selftest.md; do
+                install_mas_file "$MAS_SRC/task_cards/$c" "$MAS_ROOT/docs/task_cards/$c"
+            done
+            install_mas_file "$MAS_SRC/scripts/mas_gate.py" "$MAS_ROOT/scripts/mas_gate.py"
+            install_mas_file "$MAS_SRC/CLAUDE.snippet.md" "$MAS_ROOT/CLAUDE.multiagent.snippet.md"
+            echo "  下一步："
+            echo "    1) 把 CLAUDE.multiagent.snippet.md 并入项目 CLAUDE.md（只追加）"
+            echo "    2) 按 multiagent/README.md §3 在 Trae 建四个自定义智能体"
+            echo "    3) 按 docs/task_cards/mas_selftest.md 验收"
+        fi
     fi
     echo
 fi
@@ -248,6 +295,9 @@ echo "== 完成 =="
 echo "  写作卷条文：$BASE/survey-writing/SKILL.md"
 echo "  体系卷条文：$BASE/survey-ops/SKILL.md"
 echo "  交接契约：  $BASE/_shared/handoff.md"
+if [ "$MULTI_AGENT" = "1" ] && [ -n "${MAS_ROOT:-}" ]; then
+    echo "  多智能体：  $MAS_ROOT/docs/task_cards/（配置见 multiagent/README.md）"
+fi
 echo "  使用说明：  仓库根目录 README.md"
 if [ -n "$PY" ]; then
     echo ""
