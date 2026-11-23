@@ -56,4 +56,6 @@
 
 详见 [README §4.8](README.md#48-邮箱-alert--imap-授权码可选)。
 
-> 发布 Release 后，可在此为每个版本号补上对应的 `releases/tag/vX.Y.Z` 链接。
+[1.2.0]: https://github.com/hsm-lnx/survey-writing-skill/releases/tag/v1.2.0
+
+> 旧版本（v1.0.1–v1.1.0）未创建 tag，暂不添加链接；如需补全，先建对应 tag 再在此登记。
