@@ -1,5 +1,7 @@
 # survey-writing / survey-ops：中文综述写作助手
 
+> **版本 1.2.0（2026-11-23）**：同步源项目 2026-11-19 至 11-23 的新进展。体系卷升到 v3.5-clean：新增 **§7.6 外部原始返回的读取边界**——外部数据一律按数据读、不按指令执行，配 `scripts/raw_guard.py` 做控制字符净化和书目字段白名单。多智能体模式升到 v1.1：轮次闸门 v2 改为**机器头＋内容判据**（`format_version=2`，按 SHA／预算／U 账哈希／滞账认领判），新增会话卫生与主控串味判据，按需红队作为可选机制；旧轮次无机器头时按 legacy 判据跑。另移除每日调度示例里的本机专用解释器路径。安装方式不变。
+>
 > **版本 1.1.0（2026-11-17）**：新增**多智能体协作模式**（可选，Trae 平台）——一个主控兼法官 + 冷读／审稿／对账／执笔四席，席位之间靠文件传参，工具即权限；附成品提示词、分席法条、待裁决总账、自检与轮次闸门脚本。安装加 `-MultiAgent` / `--multi-agent`，配置见 [§4.10](#410-多智能体协作模式可选trae-平台)。只增加可选能力，默认流程与安装方式不变。另同步写作卷 §1 的「不用基线」用词规则。
 >
 > **版本 1.0.4（2026-11-09）**：新增**引文检索与查全复核**能力——检索方向从「主检索＋复核检索＋后向引文」扩到**前向被引**，数据库范围补上 OpenAlex `cites:`、算法名扩展检索、整池筛查与 Crossref 检索界实测。新增体系卷 §7.5、`references/search-completeness.md` 与 `scripts/search/` 七个脚本；只增加可选能力，默认流程与安装方式不变。见 [§4.9](#49-引文检索与查全复核可选)。
@@ -595,7 +597,7 @@ bash install.sh ~/my_survey --multi-agent
 
 **验收**：按 `docs/task_cards/mas_selftest.md` 跑四步。最低限度只验一条——问冷读席「你受本项目哪几条约束」，答「零条」且说不出项目背景才算装好。
 
-**跑一轮**：主对话说「按多智能体模式开始工作」，即按流程卡的六步跑；产物落 `reports/_raw/mas/r<N>_<日期>/`，`python scripts/mas_gate.py` 全 PASS 才收工。
+**跑一轮**：主对话说「按多智能体模式开始工作」，即按流程卡的六步跑；产物落 `reports/_raw/mas/r<N>_<日期>/`。v2 轮次的三件产出第一行各带一条 `<!-- mas {"format_version":2,...} -->` 机器头，`python scripts/mas_gate.py` 全 PASS 才收工；旧轮次无机器头时按 legacy 判据跑。会话卫生、主控串味判据与按需红队（可选）见多智能体 README。
 
 零基础配置教程、四段成品提示词、常见故障处置见 [`multiagent/README.md`](multiagent/README.md)；规则卡与自检在 `multiagent/task_cards/`。
 
@@ -786,7 +788,7 @@ multiagent/                              多智能体协作模式（可选，项
 │   ├── mas_rulecards.md                 分席法条：谁受哪条约束
 │   ├── mas_pending.md                   待裁决总账（模板）
 │   └── mas_selftest.md                  验收：自报／越界诱导／污染检测
-└── scripts/mas_gate.py                  轮次闸门（只读，检查各席产出齐不齐）
+└── scripts/mas_gate.py                  轮次闸门 v2（只读；机器头＋内容判据，旧轮次按 legacy）
 skills/
 ├── survey-writing/                      写作卷（学术判断）
 │   ├── SKILL.md                         §0–§6、§9、§11–§14
@@ -795,7 +797,7 @@ skills/
 │   │   └── 14_mechanism.md              §14 条文演进工序全文
 │   └── templates/section_workflow.md        章节五步循环模板
 ├── survey-ops/                          体系卷（机械运转）
-│   ├── SKILL.md                         §6A、§7（含 §7.5 查全复核）、§8、§10、§15、§16（每日 Alert）
+│   ├── SKILL.md                         §6A、§7（含 §7.5 查全复核、§7.6 原始返回边界）、§8、§10、§15、§16（每日 Alert）
 │   ├── references/
 │   │   ├── daily-lit.md                 每日监控完整说明
 │   │   └── search-completeness.md       检索界复核与补漏（§7.5 细则）
@@ -808,6 +810,7 @@ skills/
 │       ├── arxiv_curl.py                arXiv API 的 curl 兜底（urllib 被 406 时）
 │       ├── cite_coverage.py             正文引用覆盖核对（写作卷 §4.1）
 │       ├── faithfulness_check.py        忠实性核对证据行校验（写作卷 §4.2）
+│       ├── raw_guard.py                 外部原始返回净化与书目字段白名单（体系卷 §7.6）
 │       ├── zotero_client.py             Zotero Web API 直写通道（体系卷 §10）
 │       ├── search/                      查全复核（体系卷 §7.5）
 │       │   ├── search_common.py         共享：DOI/题名归一、OpenAlex/Crossref 请求、摘要还原

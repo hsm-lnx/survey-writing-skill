@@ -37,8 +37,10 @@ function Resolve-Python {
     $cmd = Get-Command py -ErrorAction SilentlyContinue
     if ($cmd) { return @($cmd.Source, "-3") }
     foreach ($c in @(
-        "D:\Miniconda_Destination\python.exe",
         "C:\Program Files\Python310\python.exe",
+        "C:\Python311\python.exe",
+        "C:\Python312\python.exe",
+        "C:\Python313\python.exe",
         "C:\Python314\python.exe"
     )) {
         if (Test-Path $c) { return @($c) }
