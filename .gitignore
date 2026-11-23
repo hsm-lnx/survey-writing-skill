@@ -12,14 +12,24 @@ reports/_raw/
 reports/
 manuscript/
 bib/
-docs/
+docs/*
 *.log.md
+
+# ---- 例外：只放行仓库自身的公开文档素材，其余 docs/ 内容仍保持忽略 ----
+!docs/demo-flow.svg
+!docs/index.html
+!docs/CASE-STUDY.md
+!docs/RELEASE-v1.2.0.md
+!docs/EXPOSURE-SETUP.md
 
 # ---- Python ----
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# ---- 本地工作数据（不公开）----
+.workbuddy/
 
 # ---- 编辑器 / 系统 ----
 .vscode/

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>survey-writing / survey-ops — 中文综述写作助手</title>
+  <meta name="description" content="给中文综述写作用的 Claude Code skill：收敛选题、核验文献库、搭章节骨架、逐段写作与逐条引用核对。不编文献，交付可查证的稿件。">
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f8fafc;
+      color: #0f172a;
+      font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.7;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 56px 24px 72px; }
+    .badges img { height: 20px; margin-right: 6px; vertical-align: middle; }
+    h1 { font-size: 30px; line-height: 1.35; margin: 18px 0 12px; letter-spacing: -0.01em; }
+    .lead { font-size: 17px; color: #334155; margin: 0 0 10px; }
+    .en { color: #64748b; font-size: 14px; margin: 0 0 28px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px 24px; margin: 20px 0; }
+    .demo { display: block; width: 100%; height: auto; border-radius: 10px; }
+    h2 { font-size: 19px; margin: 40px 0 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .grid .card { margin: 0; }
+    .grid h3 { margin: 0 0 6px; font-size: 15px; }
+    .grid p { margin: 0; color: #475569; font-size: 14px; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 16px 18px; overflow-x: auto; font-size: 13px; }
+    a { color: #1d4ed8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .links a { display: inline-block; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; background: #fff; font-size: 14px; }
+    footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="badges">
+      <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+      <img src="https://img.shields.io/badge/Python-3.8%2B-blue.svg" alt="Python 3.8+">
+      <img src="https://img.shields.io/badge/version-1.2.0-green.svg" alt="version 1.2.0">
+    </div>
+
+    <h1>survey-writing / survey-ops<br>中文综述写作助手</h1>
+    <p class="lead">你给它一个模糊的题目，它按固定流程把这件事做完：<strong>收敛范围 → 建核验文献库 → 搭章节骨架 → 逐段写 → 逐条核 → 交付可查的稿子。</strong></p>
+    <p class="en">Claude Code skills for Chinese literature reviews. No fabricated references — anything unverifiable is marked <code>[待验证]</code>, not invented.</p>
+
+    <div class="card">
+      <img class="demo" src="demo-flow.svg" alt="三步演示：一句话需求 → 章节提纲 → 引用核对报告">
+    </div>
+
+    <h2>它解决什么问题</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>文献能不能查证</h3>
+        <p>逐条过 Crossref / arXiv 核验，查不到就标待验证，查询记录落盘，绝不编造 DOI。</p>
+      </div>
+      <div class="card">
+        <h3>引文撑不撑得住</h3>
+        <p>按引用位置分 A/B/C 等级，只有摘要的 B 级不能撑中／强论断。</p>
+      </div>
+      <div class="card">
+        <h3>写完对不对得上</h3>
+        <p>正文编号与文献台账双轨，覆盖报告、忠实性校验、结构体检逐项落盘。</p>
+      </div>
+    </div>
+
+    <h2>五分钟上手</h2>
+    <pre><code>git clone https://github.com/hsm-lnx/survey-writing-skill.git
+cd survey-writing-skill
+# Windows
+powershell -ExecutionPolicy Bypass -File install.ps1 -ProjectRoot D:\my_survey -AutoInstall
+# macOS / Linux
+bash install.sh ~/my_survey --auto-install</code></pre>
+    <p>然后进入项目目录打开 Claude Code，直接用中文说你要做什么。</p>
+
+    <h2>去哪看更多</h2>
+    <div class="links">
+      <a href="https://github.com/hsm-lnx/survey-writing-skill#readme">完整 README</a>
+      <a href="https://github.com/hsm-lnx/survey-writing-skill/blob/main/CHANGELOG.md">更新日志</a>
+      <a href="https://github.com/hsm-lnx/survey-writing-skill/blob/main/docs/CASE-STUDY.md">完整实录</a>
+      <a href="https://github.com/hsm-lnx/survey-writing-skill/releases">Releases</a>
+      <a href="https://github.com/hsm-lnx/survey-writing-skill/issues">反馈 Issue</a>
+    </div>
+
+    <footer>MIT License · hsm-lnx · 2026</footer>
+  </main>
+</body>
+</html>

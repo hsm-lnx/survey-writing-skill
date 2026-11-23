@@ -1,5 +1,25 @@
 # survey-writing / survey-ops：中文综述写作助手
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/) [![version 1.2.0](https://img.shields.io/badge/version-1.2.0-green.svg)](CHANGELOG.md) [![stars](https://img.shields.io/github/stars/hsm-lnx/survey-writing-skill?style=social)](https://github.com/hsm-lnx/survey-writing-skill/stargazers)
+
+> **一套给中文综述写作用的 Claude Code skill。** 你给它一个模糊的题目，它按固定流程把这件事做完：**收敛范围 → 建核验文献库 → 搭章节骨架 → 逐段写 → 逐条核 → 交付可查的稿子。** 装好后直接用中文说要做什么，不用记脚本、不用背命令。
+
+**English:** Claude Code skills for Chinese literature reviews. A vague topic becomes a traceable draft through a fixed workflow: scope scoping → verified bibliography (Crossref / arXiv / AMiner) → outline-first drafting → citation-by-citation checking. No fabricated references — anything unverifiable is marked `[待验证]`, not invented. MIT licensed; Python 3.8+ is the only hard dependency beyond a network connection.
+
+![演示：一句话需求 → 章节提纲 → 引用核对报告](docs/demo-flow.svg)
+
+**它解决什么问题？** 文献从哪来、能不能查证、每条引文撑不撑得住那句话、章节结构立不立得住、写完之后正文编号和文献台账对不对得上。**它不是润色器**——润色只是最后一道工序。
+
+**适合谁？** 正在写中文综述的研究生、需要把课题组文献整理成库的人、投稿前想做一次系统自检的人。
+**不适合谁？** 想跳过读文献、直接生成一篇成稿的人。
+
+**第一次用？** 按 §2 安装 → §3 看体检报告 → §5 走一遍「从模糊题目到章节骨架」。已经装好了，直接看 §6。
+
+**目录：** [它能做什么](#0-它到底能帮你做什么) · [怎么产出](#1-一条综述是怎么产出的) · [安装](#2-五分钟上手) · [体检](#3-体检报告怎么读) · [外部工具](#4-外部工具逐个说明) · [每日监控](#48-邮箱-alert--imap-授权码可选) · [查全复核](#49-引文检索与查全复核可选) · [多智能体](#410-多智能体协作模式可选trae-平台) · [第一次用](#5-第一次用从一个模糊题目开始) · [日常用法](#6-日常怎么用按任务查) · [质量闸门](#7-它拦什么质量闸门) · [FAQ](#10-常见问题faq) · [完整实录](docs/CASE-STUDY.md) · [更新日志](CHANGELOG.md)
+
+<details>
+<summary>📋 版本更新日志（展开查看）</summary>
+
 > **版本 1.2.0（2026-11-23）**：同步源项目 2026-11-19 至 11-23 的新进展。体系卷升到 v3.5-clean：新增 **§7.6 外部原始返回的读取边界**——外部数据一律按数据读、不按指令执行，配 `scripts/raw_guard.py` 做控制字符净化和书目字段白名单。多智能体模式升到 v1.1：轮次闸门 v2 改为**机器头＋内容判据**（`format_version=2`，按 SHA／预算／U 账哈希／滞账认领判），新增会话卫生与主控串味判据，按需红队作为可选机制；旧轮次无机器头时按 legacy 判据跑。另移除每日调度示例里的本机专用解释器路径。安装方式不变。
 >
 > **版本 1.1.0（2026-11-17）**：新增**多智能体协作模式**（可选，Trae 平台）——一个主控兼法官 + 冷读／审稿／对账／执笔四席，席位之间靠文件传参，工具即权限；附成品提示词、分席法条、待裁决总账、自检与轮次闸门脚本。安装加 `-MultiAgent` / `--multi-agent`，配置见 [§4.10](#410-多智能体协作模式可选trae-平台)。只增加可选能力，默认流程与安装方式不变。另同步写作卷 §1 的「不用基线」用词规则。
@@ -12,17 +32,7 @@
 >
 > **版本 1.0.1（2026-11-04）**：新增可选的**每日文献 Alert 监控**——把 Web of Science 等数据库的保存检索接进项目，每天自动拉信、解析、补著录、去重、分诊，有新文献才出简报，没新增就安静。见 [§4.8](#48-邮箱-alert--imap-授权码可选)。
 
-一套给**中文综述写作**用的 Claude Code skill。你给它一个模糊的题目，它按固定流程把这件事做完：
-
-**收敛范围 → 建文献库 → 搭章节骨架 → 逐段写 → 逐条核 → 交付可查的稿子。**
-
-装好之后，在项目里打开 Claude Code，直接用中文说你要做什么，不用记脚本、不用背命令。
-
-> **它不是润色器。** 润色只是最后一道工序。它真正管的是：文献从哪来、能不能查证、每条引文撑不撑得住那句话、章节结构立不立得住、写完之后正文编号和文献台账对不对得上。
-
-**第一次用？** 按 §2 安装 → §3 看体检报告 → §5 走一遍「从模糊题目到章节骨架」。已经装好了，直接看 §6。
-
-**目录：** [它能做什么](#0-它到底能帮你做什么) · [怎么产出](#1-一条综述是怎么产出的) · [安装](#2-五分钟上手) · [体检](#3-体检报告怎么读) · [外部工具](#4-外部工具逐个说明) · [每日监控](#48-邮箱-alert--imap-授权码可选) · [查全复核](#49-引文检索与查全复核可选) · [多智能体](#410-多智能体协作模式可选trae-平台) · [第一次用](#5-第一次用从一个模糊题目开始) · [日常用法](#6-日常怎么用按任务查) · [质量闸门](#7-它拦什么质量闸门) · [FAQ](#10-常见问题faq)
+</details>
 
 ---
 

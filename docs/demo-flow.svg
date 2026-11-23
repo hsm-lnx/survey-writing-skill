@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" role="img" aria-labelledby="title desc">
+  <title id="title">survey-writing 三步演示：需求 → 提纲 → 核对报告</title>
+  <desc id="desc">展示从一句话需求生成章节提纲，再到引用核对报告的固定流程</desc>
+  <rect width="1000" height="320" rx="14" fill="#f8fafc"/>
+  <text x="40" y="40" font-family="system-ui,-apple-system,'Segoe UI','Microsoft YaHei',sans-serif" font-size="15" font-weight="600" fill="#0f172a">从模糊题目到可查证稿件的三步</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <g font-family="system-ui,-apple-system,'Segoe UI','Microsoft YaHei',sans-serif">
+    <!-- Card 1 -->
+    <rect x="40" y="60" width="280" height="220" rx="10" fill="#ffffff" stroke="#dbeafe" stroke-width="1.5"/>
+    <rect x="56" y="76" width="104" height="22" rx="11" fill="#eff6ff"/>
+    <text x="68" y="91" font-size="11" font-weight="600" fill="#1d4ed8">STEP 1 · 输入</text>
+    <text x="56" y="126" font-size="18" font-weight="700" fill="#0f172a">一句话需求</text>
+    <rect x="56" y="142" width="248" height="70" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="68" y="166" font-size="13" fill="#334155">「我想写一篇 XX 的中文</text>
+    <text x="68" y="188" font-size="13" fill="#334155">综述，范围还没想好」</text>
+    <text x="56" y="242" font-size="12" fill="#64748b">→ 收敛读者 / 篇幅 / 时间窗 / 边界</text>
+    <text x="56" y="262" font-size="11" fill="#94a3b8">不急着动笔，先把范围问清楚</text>
+
+    <!-- Arrow 1 -->
+    <path d="M324 170 L354 170" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+    <!-- Card 2 -->
+    <rect x="360" y="60" width="280" height="220" rx="10" fill="#ffffff" stroke="#ede9fe" stroke-width="1.5"/>
+    <rect x="376" y="76" width="104" height="22" rx="11" fill="#f5f3ff"/>
+    <text x="388" y="91" font-size="11" font-weight="600" fill="#6d28d9">STEP 2 · 骨架</text>
+    <text x="376" y="126" font-size="18" font-weight="700" fill="#0f172a">章节提纲（待确认）</text>
+    <rect x="376" y="142" width="248" height="70" rx="8" fill="#faf5ff" stroke="#ede9fe"/>
+    <text x="388" y="163" font-size="13" fill="#334155">2.1 研究脉络与阶段划分</text>
+    <text x="388" y="184" font-size="13" fill="#334155">2.2 方法分类与对比</text>
+    <text x="388" y="205" font-size="13" fill="#334155">2.3 争议与缺口</text>
+    <text x="376" y="242" font-size="12" fill="#64748b">→ 每段一句论述指向 + 拟引编号</text>
+    <text x="376" y="262" font-size="11" fill="#94a3b8">你确认后，才逐段动笔</text>
+
+    <!-- Arrow 2 -->
+    <path d="M644 170 L674 170" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+    <!-- Card 3 -->
+    <rect x="680" y="60" width="280" height="220" rx="10" fill="#ffffff" stroke="#d1fae5" stroke-width="1.5"/>
+    <rect x="696" y="76" width="104" height="22" rx="11" fill="#ecfdf5"/>
+    <text x="708" y="91" font-size="11" font-weight="600" fill="#047857">STEP 3 · 交付</text>
+    <text x="696" y="126" font-size="18" font-weight="700" fill="#0f172a">引用核对报告</text>
+    <rect x="696" y="142" width="248" height="70" rx="8" fill="#f0fdf4" stroke="#d1fae5"/>
+    <circle cx="708" cy="160" r="3.5" fill="#10b981"/>
+    <text x="720" y="164" font-size="13" fill="#334155">[12] 支撑强度 A · 可撑强论断</text>
+    <circle cx="708" cy="183" r="3.5" fill="#f59e0b"/>
+    <text x="720" y="187" font-size="13" fill="#334155">[18] 摘要转述过头 → 降为 B</text>
+    <circle cx="708" cy="206" r="3.5" fill="#ef4444"/>
+    <text x="720" y="210" font-size="13" fill="#334155">[21] DOI 查不到 → 标 [待验证]</text>
+    <text x="696" y="242" font-size="12" fill="#64748b">→ 引用覆盖 / 忠实性 / 结构体检</text>
+    <text x="696" y="262" font-size="11" fill="#94a3b8">每条引文都能回到证据行</text>
+  </g>
+</svg>
